@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111d4a">
+  <meta name="description" content="Lector móvil de hojas de respuestas del Colegio Balbino García.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quiz">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-192.svg">
+  <link rel="stylesheet" href="styles.css">
+  <title>Quiz · Evaluación</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true"><span></span><i></i></div>
+        <div>
+          <div class="brand-kicker">COLEGIO</div>
+          <div class="brand-name">Balbino García</div>
+          <div class="brand-sub">Evaluación inteligente</div>
+        </div>
+      </div>
+      <button id="installBtn" class="install-btn" hidden>Instalar app</button>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> LECTOR DE RESPUESTAS</div>
+        <h1>Califica con una <em>fotografía.</em></h1>
+        <p>Captura la tarjeta Balbino, revisa las marcas y obtén la nota automáticamente.</p>
+      </section>
+
+      <nav class="tabs" aria-label="Secciones">
+        <button class="tab active" data-tab="scan"> <span>◎</span> Calificar</button>
+        <button class="tab" data-tab="key"><span>⌘</span> Clave</button>
+        <button class="tab" data-tab="history"><span>▤</span> Historial</button>
+      </nav>
+
+      <section id="scanPanel" class="panel active-panel">
+        <div class="section-heading">
+          <div>
+            <div class="section-kicker">NUEVA LECTURA</div>
+            <h2>Registrar estudiante</h2>
+          </div>
+          <span class="step-tag">01 / 03</span>
+        </div>
+
+        <div class="form-grid">
+          <label class="field field-wide">
+            <span>Evaluación</span>
+            <input id="scanAssessment" type="text" maxlength="70" placeholder="Ej. Recuperación tercer periodo">
+          </label>
+          <label class="field field-wide">
+            <span>Nombre del estudiante</span>
+            <input id="studentName" type="text" maxlength="80" placeholder="Escribe el nombre tal como aparece en la tarjeta" autocomplete="name">
+          </label>
+          <label class="field">
+            <span>Curso</span>
+            <input id="studentCourse" type="text" maxlength="15" placeholder="10-01">
+          </label>
+          <label class="field">
+            <span>Identificación (opcional)</span>
+            <input id="studentId" type="text" maxlength="25" placeholder="Documento / código">
+          </label>
+        </div>
+
+        <div class="capture-card">
+          <div class="capture-art" aria-hidden="true">
+            <div class="scan-frame"><div class="scan-inner"><span>20</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
+          </div>
+          <div class="capture-copy">
+            <div class="capture-title">Fotografía de la tarjeta</div>
+            <p>Fotografía la tarjeta completa, en vertical y con buena luz. Rellena un solo círculo, sin X ni chulitos; conserva visibles los cuatro marcadores.</p>
+            <div class="capture-actions">
+              <button id="cameraBtn" class="btn btn-primary"> <span>▣</span> Tomar foto</button>
+              <button id="galleryBtn" class="btn btn-secondary">Elegir imagen</button>
+            </div>
+          </div>
+          <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+          <input id="galleryInput" type="file" accept="image/*" hidden>
+        </div>
+        <a class="template-link" href="assets/plantilla_balbinista.svg" download="Tarjeta_Respuestas_Balbino_BG-LC10-R20-MOBILE-V1.svg">↓ Descargar la tarjeta compatible con esta app</a>
+
+        <div id="imageStage" class="image-stage" hidden>
+          <div class="stage-header"><span class="stage-dot"></span><span id="imageFileName">Imagen lista</span><button id="removeImage" class="text-btn">Cambiar</button></div>
+          <img id="photoPreview" alt="Fotografía de la tarjeta de respuestas">
+          <button id="processBtn" class="btn btn-lime btn-full">Leer las 20 respuestas <span>→</span></button>
+        </div>
+
+        <div id="scanMessage" class="message" role="status" hidden></div>
+
+        <div id="resultPanel" class="result-panel" hidden>
+          <div class="result-topline">
+            <div>
+              <div class="section-kicker">RESULTADO DE LECTURA</div>
+              <h2 id="resultStudent">Estudiante</h2>
+              <p id="resultAssessment" class="result-subtitle"></p>
+            </div>
+            <span id="reviewBadge" class="review-badge">Lectura lista</span>
+          </div>
+          <div class="score-card">
+            <div class="score-ring"><div><strong id="scoreValue">—</strong><span>/ 50</span></div></div>
+            <div class="score-copy">
+              <div class="score-label">NOTA DE LA PRUEBA</div>
+              <div id="scoreDescriptor" class="score-descriptor">Pendiente de revisar</div>
+              <div class="score-meta"><span id="correctCount">0 correctas</span><i></i><span id="invalidCount">0 por revisar</span></div>
+            </div>
+          </div>
+          <div class="answer-review-head">
+            <div><h3>Respuestas detectadas</h3><p>Corrige aquí cualquier lectura dudosa.</p></div>
+            <button id="regradeBtn" class="small-action">Actualizar nota</button>
+          </div>
+          <div class="answer-table-wrap">
+            <table class="answer-table">
+              <thead><tr><th>N.º</th><th>Leída</th><th>Clave</th><th>Estado</th></tr></thead>
+              <tbody id="answerRows"></tbody>
+            </table>
+          </div>
+          <div class="result-actions">
+            <button id="saveResultBtn" class="btn btn-primary">Guardar resultado</button>
+            <button id="newScanBtn" class="btn btn-secondary">Siguiente estudiante</button>
+          </div>
+          <p class="scale-note">Conversión: cada respuesta correcta vale 2,5 puntos. 20 aciertos = 50,0.</p>
+        </div>
+      </section>
+
+      <section id="keyPanel" class="panel" hidden>
+        <div class="section-heading">
+          <div><div class="section-kicker">CONFIGURACIÓN</div><h2>Clave de respuestas</h2></div>
+          <span class="step-tag">20 ÍTEMS</span>
+        </div>
+        <div class="key-explainer"><span class="key-icon">✓</span><div><strong>Define la respuesta correcta.</strong><p>Selecciona A, B, C o D para cada pregunta. La clave queda guardada en este dispositivo.</p></div></div>
+        <label class="field key-title-field"><span>Nombre de la evaluación</span><input id="keyAssessment" type="text" maxlength="70" placeholder="Nombre de la prueba"></label>
+        <div class="key-columns">
+          <div class="key-column"><div class="key-column-head"><strong>01—10</strong><span>Preguntas</span></div><div id="keyLeft" class="key-list"></div></div>
+          <div class="key-column"><div class="key-column-head"><strong>11—20</strong><span>Preguntas</span></div><div id="keyRight" class="key-list"></div></div>
+        </div>
+        <div class="key-footer"><span id="keyProgress">0 de 20 definidas</span><button id="saveKeyBtn" class="btn btn-primary">Guardar clave</button></div>
+        <p class="small-muted">Puedes cambiar la clave cuando comiences otra evaluación. Los resultados ya guardados no se modifican.</p>
+      </section>
+
+      <section id="historyPanel" class="panel" hidden>
+        <div class="section-heading">
+          <div><div class="section-kicker">REGISTRO LOCAL</div><h2>Resultados guardados</h2></div>
+          <span id="historyCount" class="step-tag">0 REGISTROS</span>
+        </div>
+        <div class="history-toolbar"><p>Los registros permanecen en este dispositivo.</p><button id="exportCsvBtn" class="small-action">Exportar CSV</button></div>
+        <div id="historyList" class="history-list"></div>
+        <div id="historyEmpty" class="empty-state"><div class="empty-icon">▤</div><strong>Aún no hay resultados</strong><p>Cuando guardes la primera lectura, aparecerá aquí.</p></div>
+        <button id="clearHistoryBtn" class="danger-link" hidden>Eliminar historial de este dispositivo</button>
+      </section>
+
+      <section class="how-card">
+        <div class="how-title"><span class="how-spark">✳</span><strong>Para una lectura confiable</strong></div>
+        <div class="how-points"><span><b>01</b> Tarjeta completa y vertical</span><span><b>02</b> Círculos bien rellenados</span><span><b>03</b> Luz uniforme, sin sombras</span></div>
+      </section>
+    </main>
+
+    <footer class="app-footer"><span class="footer-leaf">✳</span> QUIZ <span class="footer-sep">·</span> COLEGIO BALBINO GARCÍA <span class="version">v1.0</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "Quiz · Lector de evaluaciones",
+  "short_name": "Quiz",
+  "description": "Lector móvil de hojas de respuestas del Colegio Balbino García.",
+  "lang": "es-CO",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f6fb",
+  "theme_color": "#111d4a",
+  "icons": [
+    {"src":"assets/icon-192.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}

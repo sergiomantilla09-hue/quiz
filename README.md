@@ -16,11 +16,11 @@ Aplicación web progresiva (PWA) para leer la tarjeta **BG-LC10-R20-MOBILE-V1** 
 
 ## Publicación
 
-URL prevista: https://sergiomantilla09-hue.github.io/quiz/
+Este proyecto es estático y se publica mediante GitHub Actions. El flujo de trabajo está en `.github/workflows/pages.yml` y se ejecuta automáticamente cuando hay cambios en `main`.
 
-En GitHub abre **Settings → Pages**, selecciona **Deploy from a branch**, elige **main** y la carpeta **/(root)** y guarda.
+URL de la aplicación: https://sergiomantilla09-hue.github.io/quiz/
 
-La app requiere HTTPS para utilizar la cámara y ofrecer la instalación. Las fotografías se procesan localmente en el dispositivo; no se envían a un servidor.
+Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este repositorio y selecciona **GitHub Actions** como fuente de publicación.
 
 ## Uso
 
@@ -33,6 +33,10 @@ La app requiere HTTPS para utilizar la cámara y ofrecer la instalación. Las fo
 
 ## Tarjeta compatible
 
-Utiliza la tarjeta incluida en `assets/plantilla_balbinista.png` y conserva visibles los cuatro marcadores. No cambies la posición de las burbujas sin actualizar las coordenadas de lectura.
+Utiliza la tarjeta incluida en `assets/plantilla_balbinista.svg` y conserva visibles los cuatro marcadores. No cambies la posición de las burbujas sin actualizar las coordenadas de lectura.
 
 La lectura automática debe validarse con tarjetas físicas reales antes de registrar calificaciones oficiales. El historial queda en el almacenamiento local del navegador; exporta periódicamente el CSV como respaldo.
+
+## Privacidad
+
+Las fotografías se procesan en el navegador y no se envían a un servidor. Los resultados se guardan localmente en el dispositivo. La aplicación publicada es pública, pero no almacena los registros de los estudiantes en GitHub.

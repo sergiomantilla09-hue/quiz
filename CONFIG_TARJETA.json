@@ -1,0 +1,25 @@
+{
+  "templateId": "BG-LC10-R20-MOBILE-V1",
+  "institution": "Colegio Balbino García",
+  "assessmentType": "20 preguntas de selección múltiple",
+  "referenceImage": "assets/plantilla_balbinista.svg",
+  "referenceSize": { "width": 1199, "height": 1312 },
+  "fiducialMarkers": {
+    "topLeft": { "x": 86, "y": 67 },
+    "topRight": { "x": 1114, "y": 65 },
+    "bottomRight": { "x": 1114, "y": 1237 },
+    "bottomLeft": { "x": 86, "y": 1237 }
+  },
+  "answerOptions": ["A", "B", "C", "D"],
+  "bubbleCenters": {
+    "leftColumnX": [256.8, 344.5, 432.2, 520.2],
+    "rightColumnX": [785.4, 873.6, 961.8, 1050.9],
+    "rowY": [516.8, 575.3, 633.2, 691.6, 750.4, 809.1, 867.7, 926.0, 984.7, 1043.6]
+  },
+  "scoring": {
+    "questions": 20,
+    "maximumScore": 50,
+    "pointsPerCorrectAnswer": 2.5,
+    "unansweredOrMultipleMarks": 0
+  }
+}

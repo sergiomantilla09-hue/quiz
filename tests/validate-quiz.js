@@ -122,7 +122,7 @@ assert.doesNotMatch(app, /sheetEvaluationType|sheetCustomLabelField|sheetCustomL
 function extractFunction(name) {
   const start = app.indexOf('function ' + name + '(');
   assert.notEqual(start, -1, 'No se encontró la función ' + name);
-  const end = app.indexOf('\\nfunction ', start + 1);
+  const end = app.indexOf('\nfunction ', start + 1);
   return app.slice(start, end === -1 ? app.length : end);
 }
 const omrSandbox = {
@@ -137,7 +137,7 @@ vm.runInContext([
   extractFunction('readAnswerBubbles'),
   extractFunction('mergeFrameReads'),
   extractFunction('isPendingAnswer')
-].join('\\n'), omrSandbox);
+].join('\n'), omrSandbox);
 
 function syntheticBubble(color, mark = 'filled') {
   const width = 80, height = 80, cx = 40, cy = 40;

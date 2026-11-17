@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1199" height="1700" viewBox="0 0 1199 1700" role="img" aria-labelledby="title desc">
 <title id="title">Tarjeta de respuestas QUIZ · 30 preguntas</title>
-<desc id="desc">Tarjeta vertical de 30 preguntas, dos columnas, cuatro opciones y cuatro marcadores cuadrados para lectura con cámara.</desc>
+<desc id="desc">Tarjeta QUIZ de 30 preguntas, personalizable por asignatura, grado y tipo de evaluación.</desc>
 <rect width="1199" height="1700" fill="#ffffff"/>
 <defs>
   <linearGradient id="lav" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1edfb"/><stop offset="1" stop-color="#e7e0f8"/></linearGradient>
@@ -41,10 +41,10 @@
 </g>
 <rect x="330" y="143" width="540" height="72" rx="36" fill="url(#lav)"/>
 <text x="600" y="190" class="title" font-size="42" text-anchor="middle">Hoja de respuestas</text>
-<rect x="125" y="238" width="292" height="58" rx="29" fill="url(#lime)"/>
-<text x="271" y="276" font-family="Georgia,serif" font-size="38" font-style="italic" font-weight="700" fill="#111d4a" text-anchor="middle">Recuperación</text>
+<rect id="sheetTypePill" x="125" y="238" width="292" height="58" rx="29" fill="url(#lime)"/>
+<text id="sheetTypeLabel" x="271" y="276" font-family="Georgia,serif" font-size="38" font-style="italic" font-weight="700" fill="#111d4a" text-anchor="middle">Recuperación</text>
 <rect x="438" y="238" width="637" height="58" rx="29" fill="url(#lav)"/>
-<text x="756" y="276" class="small" font-size="31" text-anchor="middle">Evaluación · 30 preguntas</text>
+<text id="sheetSubjectLine" x="756" y="276" class="small" font-size="31" text-anchor="middle">Lengua Castellana · Grado 10.º</text>
 <rect x="66" y="326" width="1067" height="70" rx="35" fill="#fff" stroke="#b9a9df" stroke-width="2.8"/>
 <text x="94" y="370" class="title" font-size="25">Nombre:</text>
 <line x1="214" y1="373" x2="786" y2="373" stroke="#111d4a" stroke-width="2.6"/>

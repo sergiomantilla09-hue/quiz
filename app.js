@@ -92,7 +92,7 @@ function normalizeSheetSettings(value) {
     ? source.evaluationType
     : DEFAULT_SHEET_SETTINGS.evaluationType;
   const customLabel = typeof source.customLabel === 'string' ? source.customLabel.trim().slice(0, 18) : '';
-  return { area: area || DEFAULT_SHEET_SETTINGS.area, grade, evaluationType, customLabel };
+  return { area, grade, evaluationType, customLabel };
 }
 function loadStore() {
   try {
@@ -259,7 +259,7 @@ function updateSheetEditorPreview() {
   if (!ui.sheetArea || !ui.sheetGrade || !ui.sheetEvaluationType) return;
   const settings = readSheetSettingsFromEditor();
   const label = getSheetEvaluationLabel(settings) || 'Tipo de evaluación';
-  const subject = settings.area + ' · Grado ' + settings.grade;
+  const subject = (settings.area || 'Área o asignatura') + ' · Grado ' + settings.grade;
   if (ui.sheetPreviewType) ui.sheetPreviewType.textContent = label;
   if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = subject;
   if (ui.sheetCustomLabelField) ui.sheetCustomLabelField.hidden = settings.evaluationType !== 'custom';

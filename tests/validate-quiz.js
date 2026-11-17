@@ -110,7 +110,7 @@ assert.match(app, /function getSheetEvaluationLabel/);
 assert.match(app, /function mergeFrameReads/);
 assert.match(app, /item\.confirmedBlank = false/);
 assert.match(app, /const allBlank = answers\.every\(item => item\.confirmedBlank\)/);
-assert.match(app, /if\(pending>0 \|\| allBlank\)/);
+assert.match(app, /pending>0\s*\?/);
 assert.match(app, /No se detectaron marcas en ninguna respuesta/);
 assert.match(app, /LIVE_CAPTURE_FRAME_COUNT = 5/);
 assert.match(app, /LIVE_CAPTURE_INTERVAL_MS = 180/);

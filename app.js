@@ -131,7 +131,7 @@ ui.saveKeyBtn.addEventListener('click', () => {
   persist();
   ui.scanAssessment.value = title;
   if (currentRead) renderResult();
-  showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : 'Clave guardada parcialmente. Completa las ${QUESTION_COUNT} para calcular la nota.');
+  showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : `Clave guardada parcialmente. Completa las ${QUESTION_COUNT} para calcular la nota.`);
 });
 
 function resetScan() {
@@ -232,8 +232,8 @@ function detectMarkers(rgba, width, height) {
   for (let i = 0, p = 0; i < gray.length; i++, p += 4) gray[i] = Math.round(.299 * rgba[p] + .587 * rgba[p + 1] + .114 * rgba[p + 2]);
 
   const regions = {
-    tl: { x0: 0, x1: Math.floor(width * .34), y0: 0, y1: Math.floor(height * .32), expected: [0.072, 0.051] },
-    tr: { x0: Math.floor(width * .66), x1: width, y0: 0, y1: Math.floor(height * .32), expected: [0.929, 0.050] },
+    tl: { x0: 0, x1: Math.floor(width * .34), y0: 0, y1: Math.floor(height * .32), expected: [0.072, 0.0394] },
+    tr: { x0: Math.floor(width * .66), x1: width, y0: 0, y1: Math.floor(height * .32), expected: [0.929, 0.0394] },
     bl: { x0: 0, x1: Math.floor(width * .34), y0: Math.floor(height * .68), y1: height, expected: [0.072, 0.943] },
     br: { x0: Math.floor(width * .66), x1: width, y0: Math.floor(height * .68), y1: height, expected: [0.929, 0.943] }
   };

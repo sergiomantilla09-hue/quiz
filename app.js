@@ -672,8 +672,12 @@ ui.exportCsvBtn.addEventListener('click', () => {
   exportCsv(store.results, 'resultados_balbino_scan.csv');
 });
 function exportCsv(records, filename) {
-  const headers = ['Estudiante', 'Curso', 'Identificación', 'Evaluación', 'Fecha', 'Correctas', 'Nota sobre 50', ...Array.from({ length: QUESTION_COUNT }, (_, i) => `P${i + 1}`)];
-  const rows = records.map(record => [record.student, record.course, record.studentId, record.assessment, formatDate(record.date), record.correct, Number(record.score).toFixed(1), ...Array.from({ length: QUESTION_COUNT }, (_, i) => (record.answers || [])[i] || '')]);
+  const headers = ['Estudiante', 'Curso', 'Identificación', 'Evaluación', 'Fecha', 'Preguntas', 'Correctas', 'Nota sobre 50', ...Array.from({ length: MAX_QUESTION_COUNT }, (_, i) => `P${i + 1}`)];
+  const rows = records.map(record => [
+    record.student, record.course, record.studentId, record.assessment, formatDate(record.date),
+    record.questionCount || (record.answers || []).length, record.correct, Number(record.score).toFixed(1),
+    ...Array.from({ length: MAX_QUESTION_COUNT }, (_, i) => (record.answers || [])[i] || '')
+  ]);
   const csv = '\ufeff' + [headers, ...rows].map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -887,7 +891,7 @@ function liveDetectionLoop(timestamp) {
 function showScoreDialog(record) {
   ui.dialogStudent.textContent = record.student + (record.course ? ' · ' + record.course : '');
   ui.dialogScore.textContent = Number(record.score).toFixed(1);
-  ui.dialogCorrect.textContent = record.correct + ' de ' + QUESTION_COUNT + ' respuestas correctas';
+  ui.dialogCorrect.textContent = record.correct + ' de ' + (record.questionCount || QUESTION_COUNT) + ' respuestas correctas';
   ui.dialogNote.textContent = record.needsReview
     ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
     : 'Resultado guardado automáticamente en el historial.';

@@ -138,3 +138,42 @@ main>.template-link{margin-top:8px;margin-bottom:4px}
   .quiz-type-choice-main small{font-size:8px}
   .quiz-type-check{width:19px;height:19px;flex-basis:19px}
 }
+
+
+/* Custom QUIZ answer-sheet editor */
+.sheet-editor-card{margin:16px 0 18px;padding:16px;border:1px solid #e2dcef;border-radius:17px;background:linear-gradient(145deg,#fcfbff 0%,#fbfdee 100%);box-shadow:0 8px 24px rgba(17,29,74,.045)}
+.sheet-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sheet-editor-heading h3{margin:4px 0 0;color:var(--navy);font-size:17px;letter-spacing:-.035em}
+.sheet-editor-tag{padding:6px 9px;border-radius:20px;background:#eee9fa;color:#71609f;font-size:8px;font-weight:900;letter-spacing:.1em;white-space:nowrap}
+.sheet-editor-intro{font-size:10px;line-height:1.5;color:var(--muted);margin:8px 0 13px}
+.sheet-editor-fields{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(115px,.6fr);gap:11px}
+.sheet-editor-fields .field-wide{grid-column:1/-1}
+.sheet-editor-fields .field span{font-size:10px}
+.sheet-editor-fields input,.sheet-editor-fields select{min-height:42px;background:#fff;border-color:#e1dced}
+.sheet-editor-fields [hidden]{display:none}
+.sheet-preview{margin-top:13px;padding:12px;border:1px solid #e6e1f1;border-radius:13px;background:#fff;text-align:center}
+.sheet-preview-kicker{font-size:8px;font-weight:900;letter-spacing:.18em;color:#9182b7}
+.sheet-preview-title{margin:7px auto 9px;padding:6px 14px;width:max-content;max-width:100%;border-radius:24px;background:#eee9fa;color:var(--navy);font-size:16px;font-weight:900}
+.sheet-preview-meta{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.sheet-preview-meta span{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:4px 12px;border-radius:18px;background:var(--lime);color:var(--navy);font-family:Georgia,serif;font-size:13px;font-style:italic;font-weight:800}
+.sheet-preview-meta strong{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:4px 13px;border-radius:18px;background:#eee9fa;color:var(--navy);font-size:11px;font-weight:800}
+.sheet-preview-brand{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:10px;color:var(--navy);font-size:10px;font-weight:950;letter-spacing:.16em}
+.sheet-preview-brand img{width:18px;height:18px}
+.sheet-preview-brand small{margin-left:6px;color:#868099;font-size:7px;letter-spacing:.1em}
+.sheet-download-btn{display:flex;align-items:center;gap:10px;width:100%;min-height:55px;margin-top:12px;padding:9px 13px;border-radius:13px;background:var(--navy);color:#fff;text-decoration:none;box-shadow:0 6px 15px rgba(17,29,74,.16);transition:transform .12s,box-shadow .12s}
+.sheet-download-btn:active{transform:scale(.99)}
+.sheet-download-icon{display:grid;place-items:center;width:31px;height:31px;flex:0 0 31px;border-radius:10px;background:var(--lime);color:var(--navy);font-size:22px;font-weight:900}
+.sheet-download-btn>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:3px}
+.sheet-download-btn strong{font-size:11px;font-weight:900}
+.sheet-download-btn small{font-size:8px;color:#d9def0}
+.sheet-download-arrow{font-size:20px;font-weight:800}
+.sheet-editor-footnote{margin:9px 1px 0;color:#82899b;font-size:8px;line-height:1.45}
+@media(max-width:620px){
+  .sheet-editor-card{padding:12px;margin:13px 0 15px}
+  .sheet-editor-fields{gap:8px}
+  .sheet-preview{padding:10px 7px}
+  .sheet-preview-title{font-size:14px}
+  .sheet-preview-meta strong{font-size:9px}
+  .sheet-download-btn{min-height:52px;padding:8px 10px}
+  .sheet-download-btn strong{font-size:10px}
+}

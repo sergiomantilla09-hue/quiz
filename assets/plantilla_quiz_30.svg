@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1199" height="1700" viewBox="0 0 1199 1700" role="img" aria-labelledby="title desc">
 <title id="title">Tarjeta de respuestas QUIZ · 30 preguntas</title>
-<desc id="desc">Tarjeta vertical de 20 preguntas, dos columnas, cuatro opciones y cuatro marcadores cuadrados para lectura con cámara.</desc>
-<rect width="1199" height="1312" fill="#ffffff"/>
+<desc id="desc">Tarjeta vertical de 30 preguntas, dos columnas, cuatro opciones y cuatro marcadores cuadrados para lectura con cámara.</desc>
+<rect width="1199" height="1700" fill="#ffffff"/>
 <defs>
   <linearGradient id="lav" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1edfb"/><stop offset="1" stop-color="#e7e0f8"/></linearGradient>
   <linearGradient id="lime" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e4fb54"/><stop offset="1" stop-color="#c9eb35"/></linearGradient>
@@ -53,7 +53,7 @@
 
 <rect x="82" y="416" width="490" height="964" rx="25" fill="#fff" stroke="#aa97d7" stroke-width="2.6"/>
 <path d="M107 418 H547 Q570 418 570 443 V480 H84 V443 Q84 418 107 418Z" fill="url(#lav)"/>
-<rect x="610" y="416" width="490" height="664" rx="25" fill="#fff" stroke="#aa97d7" stroke-width="2.6"/>
+<rect x="610" y="416" width="490" height="964" rx="25" fill="#fff" stroke="#aa97d7" stroke-width="2.6"/>
 <path d="M635 418 H1075 Q1098 418 1098 443 V480 H612 V443 Q612 418 635 418Z" fill="url(#lav)"/>
 <text x="162" y="451" class="colhead">N.º</text>
 <text x="256.8" y="451" class="colhead">A</text>
@@ -278,11 +278,11 @@
 
 <rect x="230" y="1410" width="739" height="68" rx="34" fill="url(#lav)"/>
 <circle cx="291" cy="1444" r="31" fill="url(#lime)"/>
-<path d="M278 1156 L299 1133 L307 1141 L285 1162 L276 1163Z" fill="none" stroke="#111d4a" stroke-width="4" stroke-linejoin="round"/>
-<path d="M297 1135 L304 1142" stroke="#111d4a" stroke-width="4"/>
+<path d="M278 1456 L299 1433 L307 1441 L285 1462 L276 1463Z" fill="none" stroke="#111d4a" stroke-width="4" stroke-linejoin="round"/>
+<path d="M297 1435 L304 1442" stroke="#111d4a" stroke-width="4"/>
 <line x1="333" y1="1427" x2="333" y2="1462" stroke="#111d4a" stroke-width="3"/>
 <text x="650" y="1453" class="title" font-size="27" text-anchor="middle">Marca solo una opción por pregunta.</text>
 <line x1="216" y1="1530" x2="405" y2="1530" stroke="#aa97d7" stroke-width="3"/>
-<text x="600" y="1538" class="title" font-size="23" text-anchor="middle" letter-spacing="2">QUIZ-LC10-R20-MOBILE-V1</text>
+<text x="600" y="1538" class="title" font-size="23" text-anchor="middle" letter-spacing="2">QUIZ-R30-MOBILE-V1</text>
 <line x1="795" y1="1530" x2="984" y2="1530" stroke="#aa97d7" stroke-width="3"/>
 </svg>

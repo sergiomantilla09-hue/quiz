@@ -694,11 +694,12 @@ function updateScoreDisplay() {
   ui.correctCount.textContent = `${correct} correctas`;
   ui.invalidCount.textContent = `${pending} por revisar`;
   ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
-  const needsReview = pending > 0 || !keyReady;
-  ui.reviewBadge.textContent = !keyReady ? 'Falta la clave' : needsReview ? 'Requiere revisión' : 'Lectura completa';
+  const captureReview = Boolean(currentRead.requiresReview);
+  const needsReview = pending > 0 || !keyReady || captureReview;
+  ui.reviewBadge.textContent = !keyReady ? 'Falta la clave' : captureReview ? 'Verificar captura' : needsReview ? 'Requiere revisión' : 'Lectura completa';
   ui.reviewBadge.className = `review-badge${needsReview ? ' warn' : ''}`;
   ui.saveResultBtn.disabled = !keyReady;
-  ui.saveResultBtn.textContent = keyReady ? 'Guardar resultado' : 'Configura la clave primero';
+  ui.saveResultBtn.textContent = keyReady ? (captureReview ? 'Confirmar resultado' : 'Guardar resultado') : 'Configura la clave primero';
 }
 ui.regradeBtn.addEventListener('click', () => { renderResult(); showToast('Nota actualizada.'); });
 ui.studentName.addEventListener('input', () => { if (currentRead) ui.resultStudent.textContent = ui.studentName.value.trim() || 'Estudiante sin identificar'; });
@@ -708,7 +709,10 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
   const student = ui.studentName.value.trim() || 'Sin identificar';
   const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length;
   const pending = currentRead.answers.filter(isPendingAnswer).length;
-  if (pending > 0 && askForPending && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return null;
+  const warnings = [];
+  if (currentRead.requiresReview) warnings.push('No se detectaron marcas en ninguna respuesta. Verifica el enfoque y la tarjeta.');
+  if (pending > 0) warnings.push(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa; se contarán como incorrectas.`);
+  if (warnings.length && askForPending && !confirm(warnings.join('\\n') + '\\n¿Deseas guardar la nota?')) return null;
   const record = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`,
     student,
@@ -722,8 +726,9 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
     answers: currentRead.answers.map(item => item.answer || ''),
     key: [...store.answerKey],
     source: currentRead.sourceName,
-    needsReview: pending > 0,
-    pendingCount: pending
+    needsReview: pending > 0 || Boolean(currentRead.requiresReview),
+    pendingCount: pending,
+    reviewReason: currentRead.requiresReview ? 'No se detectaron marcas en ninguna respuesta; verifica el enfoque y la tarjeta.' : ''
   };
   store.results.unshift(record);
   persist();
@@ -1028,9 +1033,9 @@ function showScoreDialog(record) {
   ui.dialogStudent.textContent = record.student + (record.course ? ' · ' + record.course : '');
   ui.dialogScore.textContent = Number(record.score).toFixed(1);
   ui.dialogCorrect.textContent = record.correct + ' de ' + (record.questionCount || QUESTION_COUNT) + ' respuestas correctas';
-  ui.dialogNote.textContent = record.needsReview
+  ui.dialogNote.textContent = record.reviewReason || (record.needsReview
     ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
-    : 'Resultado guardado automáticamente en el historial.';
+    : 'Resultado guardado automáticamente en el historial.');
   ui.scoreDialog.hidden = false;
   ui.dialogOkBtn.focus();
 }
@@ -1067,15 +1072,18 @@ async function captureAndGradeLive() {
       if(i<LIVE_CAPTURE_FRAME_COUNT-1){setLiveStatus('Comparando toma '+(i+1)+' de '+LIVE_CAPTURE_FRAME_COUNT+'… Mantén la hoja quieta.');await new Promise(resolve=>window.setTimeout(resolve,LIVE_CAPTURE_INTERVAL_MS));}
     }
     const answers=mergeFrameReads(frameReads);
+    const allBlank = answers.every(item => item.confirmedBlank);
     currentFile=null;
-    currentRead={answers,sourceName:'Cámara en vivo · '+frameReads.length+' tomas',detectedAt:new Date().toISOString(),manuallyChanged:false,captureFrames:frameReads.length};
+    currentRead={answers,sourceName:'Cámara en vivo · '+frameReads.length+' tomas',detectedAt:new Date().toISOString(),manuallyChanged:false,captureFrames:frameReads.length,requiresReview:allBlank};
     ui.imageFileName.textContent='Lectura verificada con '+frameReads.length+' tomas';
     ui.photoPreview.src=lastCaptureUrl; ui.imageStage.hidden=false; renderResult();
     const pending=answers.filter(isPendingAnswer).length;
     stopLiveScanner(true);
-    if(pending>0){
+    if(pending>0 || allBlank){
       ui.resultPanel.hidden=false;
-      showMessage('Se compararon '+frameReads.length+' tomas. '+pending+' respuesta(s) no coincidieron con suficiente seguridad. Revísalas antes de guardar la calificación.','error');
+      showMessage(allBlank
+        ? 'No se detectó ninguna marca en la tarjeta. Comprueba el enfoque, la iluminación y que las respuestas estén visibles; revisa la lectura antes de guardar.'
+        : 'Se compararon '+frameReads.length+' tomas. '+pending+' respuesta(s) no coincidieron con suficiente seguridad. Revísalas antes de guardar la calificación.','error');
       ui.resultPanel.scrollIntoView({behavior:'smooth',block:'start'}); return;
     }
     const record=saveCurrentResult({askForPending:false,silent:true});

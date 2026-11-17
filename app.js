@@ -581,3 +581,209 @@ ui.installBtn.addEventListener('click', async () => {
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(error => console.warn('No se pudo registrar el service worker:', error)));
 }
+
+ 
+// Live camera scanner with AR-style fiducial alignment.
+ui.liveScanBtn = $('liveScanBtn');
+ui.liveScanner = $('liveScanner');
+ui.closeLiveScannerBtn = $('closeLiveScannerBtn');
+ui.liveVideo = $('liveVideo');
+ui.liveViewfinder = $('liveViewfinder');
+ui.liveLockBadge = $('liveLockBadge');
+ui.liveStatus = $('liveStatus');
+ui.liveCaptureBtn = $('liveCaptureBtn');
+
+let liveStream = null;
+let liveFrameRequest = 0;
+let liveLastDetection = 0;
+let liveStableFrames = 0;
+let liveMarkersReady = false;
+let liveBusy = false;
+let livePreviewCanvas = null;
+
+function setLiveStatus(message, state = '') {
+  if (!ui.liveStatus) return;
+  ui.liveStatus.textContent = message;
+  ui.liveStatus.className = 'live-status' + (state ? ' ' + state : '');
+}
+function stopLiveScanner(hide = true) {
+  if (liveFrameRequest) cancelAnimationFrame(liveFrameRequest);
+  liveFrameRequest = 0;
+  liveBusy = false;
+  if (liveStream) liveStream.getTracks().forEach(track => track.stop());
+  liveStream = null;
+  if (ui.liveVideo) {
+    ui.liveVideo.pause();
+    ui.liveVideo.srcObject = null;
+  }
+  liveMarkersReady = false;
+  liveStableFrames = 0;
+  if (ui.liveCaptureBtn) {
+    ui.liveCaptureBtn.disabled = true;
+    ui.liveCaptureBtn.textContent = 'Esperando los cuatro marcadores…';
+  }
+  if (ui.liveViewfinder) ui.liveViewfinder.classList.remove('locked');
+  if (ui.liveLockBadge) ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
+  if (ui.liveScanBtn) ui.liveScanBtn.disabled = false;
+  if (hide && ui.liveScanner) ui.liveScanner.hidden = true;
+}
+ui.liveScanBtn.addEventListener('click', openLiveScanner);
+ui.closeLiveScannerBtn.addEventListener('click', () => stopLiveScanner(true));
+
+async function openLiveScanner() {
+  clearMessage();
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showMessage('La cámara en vivo necesita abrir Quiz desde su dirección HTTPS y permitir el acceso a la cámara.', 'error');
+    return;
+  }
+  if (!store.answerKey.every(Boolean)) {
+    showMessage('Antes de escanear, configura las 20 respuestas correctas en la sección Clave.', 'error');
+    switchTab('key');
+    return;
+  }
+  stopLiveScanner(false);
+  ui.liveScanner.hidden = false;
+  ui.liveScanBtn.disabled = true;
+  setLiveStatus('Solicitando acceso a la cámara…');
+  try {
+    liveStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1600 },
+        height: { ideal: 1800 },
+        aspectRatio: { ideal: TEMPLATE.width / TEMPLATE.height }
+      }
+    });
+    ui.liveVideo.srcObject = liveStream;
+    await new Promise((resolve, reject) => {
+      if (ui.liveVideo.readyState >= 1) return resolve();
+      ui.liveVideo.onloadedmetadata = resolve;
+      ui.liveVideo.onerror = () => reject(new Error('No se pudo iniciar la vista de cámara.'));
+    });
+    await ui.liveVideo.play();
+    livePreviewCanvas = document.createElement('canvas');
+    livePreviewCanvas.width = 720;
+    livePreviewCanvas.height = Math.round(720 * TEMPLATE.height / TEMPLATE.width);
+    setLiveStatus('Alinea los cuatro cuadrados negros con las guías.');
+    liveLastDetection = 0;
+    liveStableFrames = 0;
+    liveMarkersReady = false;
+    liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
+  } catch (error) {
+    console.error('Quiz camera:', error);
+    stopLiveScanner(true);
+    let message = 'No se pudo abrir la cámara. Revisa los permisos del navegador.';
+    if (error && (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError')) {
+      message = 'El navegador no tiene permiso para usar la cámara. Autoriza el acceso y vuelve a intentarlo.';
+    } else if (error && error.name === 'NotFoundError') {
+      message = 'No se encontró una cámara disponible en este dispositivo.';
+    } else if (error && error.name === 'NotReadableError') {
+      message = 'La cámara está siendo utilizada por otra aplicación. Ciérrala y vuelve a intentar.';
+    }
+    showMessage(message, 'error');
+  }
+}
+
+function drawVideoCoverToCanvas(video, canvas) {
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const targetW = canvas.width, targetH = canvas.height;
+  const sourceW = video.videoWidth, sourceH = video.videoHeight;
+  if (!sourceW || !sourceH) throw new Error('La cámara todavía no está lista.');
+  const targetRatio = targetW / targetH;
+  const sourceRatio = sourceW / sourceH;
+  let sx = 0, sy = 0, sw = sourceW, sh = sourceH;
+  if (sourceRatio > targetRatio) {
+    sw = sourceH * targetRatio;
+    sx = (sourceW - sw) / 2;
+  } else {
+    sh = sourceW / targetRatio;
+    sy = (sourceH - sh) / 2;
+  }
+  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, targetW, targetH);
+  return ctx;
+}
+
+function liveDetectionLoop(timestamp) {
+  if (!liveStream || ui.liveScanner.hidden) return;
+  liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
+  if (liveBusy || timestamp - liveLastDetection < 220 || ui.liveVideo.readyState < 2) return;
+  liveBusy = true;
+  liveLastDetection = timestamp;
+  try {
+    const ctx = drawVideoCoverToCanvas(ui.liveVideo, livePreviewCanvas);
+    const frame = ctx.getImageData(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
+    detectMarkers(frame.data, frame.width, frame.height);
+    liveStableFrames += 1;
+    if (liveStableFrames >= 3) {
+      liveMarkersReady = true;
+      ui.liveViewfinder.classList.add('locked');
+      ui.liveLockBadge.textContent = '4 / 4 MARCADORES RECONOCIDOS';
+      setLiveStatus('¡Tarjeta alineada! Mantén el celular quieto y captura.', 'ready');
+      ui.liveCaptureBtn.disabled = false;
+      ui.liveCaptureBtn.textContent = 'Capturar y calificar →';
+    } else {
+      ui.liveViewfinder.classList.remove('locked');
+      ui.liveLockBadge.textContent = 'Detectando…';
+      setLiveStatus('Reconociendo los cuatro puntos… ' + liveStableFrames + '/3');
+    }
+  } catch (error) {
+    liveStableFrames = 0;
+    liveMarkersReady = false;
+    ui.liveViewfinder.classList.remove('locked');
+    ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
+    ui.liveCaptureBtn.disabled = true;
+    ui.liveCaptureBtn.textContent = 'Esperando los cuatro marcadores…';
+    setLiveStatus('Alinea la tarjeta completa. Los cuatro cuadrados deben verse dentro de la guía.');
+  } finally {
+    liveBusy = false;
+  }
+}
+
+ui.liveCaptureBtn.addEventListener('click', captureAndGradeLive);
+async function captureAndGradeLive() {
+  if (!liveMarkersReady || !liveStream || !ui.liveVideo.videoWidth) return;
+  ui.liveCaptureBtn.disabled = true;
+  ui.liveCaptureBtn.textContent = 'Capturando…';
+  setLiveStatus('Capturando y leyendo las 20 respuestas…');
+  try {
+    const captureCanvas = document.createElement('canvas');
+    captureCanvas.width = TEMPLATE.width;
+    captureCanvas.height = TEMPLATE.height;
+    const captureContext = drawVideoCoverToCanvas(ui.liveVideo, captureCanvas);
+    const sourceImage = captureContext.getImageData(0, 0, captureCanvas.width, captureCanvas.height);
+    // Re-detect on the full-resolution still frame; never rely only on the live preview lock.
+    const markers = detectMarkers(sourceImage.data, sourceImage.width, sourceImage.height);
+    const warped = warpToTemplate(sourceImage.data, sourceImage.width, sourceImage.height, markers);
+    const answers = readAnswerBubbles(warped.data, warped.width, warped.height);
+    currentFile = null;
+    currentRead = {
+      answers,
+      sourceName: 'Cámara en vivo',
+      detectedAt: new Date().toISOString(),
+      manuallyChanged: false
+    };
+    ui.imageFileName.textContent = 'Captura realizada desde la cámara guiada';
+    ui.photoPreview.src = captureCanvas.toDataURL('image/jpeg', .9);
+    ui.imageStage.hidden = false;
+    stopLiveScanner(true);
+    renderResult();
+    ui.resultPanel.hidden = false;
+    const needsReview = answers.some(item => item.status !== 'ok');
+    showMessage(needsReview
+      ? 'Tarjeta capturada. Revisa las preguntas marcadas antes de guardar la nota.'
+      : 'Tarjeta capturada y leída. Verifica el resultado antes de guardarlo.', 'success');
+    ui.resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (error) {
+    console.error('Quiz live capture:', error);
+    setLiveStatus(error && error.message ? error.message : 'No se pudo leer la tarjeta. Alinea de nuevo los cuatro marcadores.', 'error');
+    ui.liveCaptureBtn.disabled = false;
+    ui.liveCaptureBtn.textContent = 'Intentar de nuevo';
+    liveMarkersReady = false;
+    liveStableFrames = 0;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && liveStream) stopLiveScanner(true);
+});

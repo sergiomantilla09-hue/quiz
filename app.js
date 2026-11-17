@@ -56,9 +56,13 @@ const ui = {
   keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), scanCardCount: $('scanCardCount'),
   processBtn: $('processBtn'),
   sheetArea: $('sheetArea'), sheetGrade: $('sheetGrade'), sheetName: $('sheetName'),
+  sheetPresetName: $('sheetPresetName'), sheetPresetSelect: $('sheetPresetSelect'), saveSheetPresetBtn: $('saveSheetPresetBtn'),
+  loadSheetPresetBtn: $('loadSheetPresetBtn'), deleteSheetPresetBtn: $('deleteSheetPresetBtn'),
+  sheetPreviewImage: $('sheetPreviewImage'),
   downloadPngBtn: $('downloadPngBtn'), downloadJpgBtn: $('downloadJpgBtn'), downloadSvgBtn: $('downloadSvgBtn'),
   sheetPreviewType: $('sheetPreviewType'), sheetPreviewSubject: $('sheetPreviewSubject'),
   sheetPreviewCount: $('sheetPreviewCount'), sheetDownloadMeta: $('sheetDownloadMeta'),
+  answerPhotoCanvas: $('answerPhotoCanvas'),
   cameraBtn: $('cameraBtn'), galleryBtn: $('galleryBtn'), cameraInput: $('cameraInput'), galleryInput: $('galleryInput'),
   imageStage: $('imageStage'), imageFileName: $('imageFileName'), photoPreview: $('photoPreview'), processBtn: $('processBtn'), removeImage: $('removeImage'),
   scanMessage: $('scanMessage'), resultPanel: $('resultPanel'), resultStudent: $('resultStudent'), resultAssessment: $('resultAssessment'), reviewBadge: $('reviewBadge'),
@@ -105,6 +109,7 @@ function loadStore() {
       answerKeys,
       answerKey: answerKeys[questionCount].slice(),
       sheetSettings: normalizeSheetSettings(parsed.sheetSettings),
+      sheetPresets: Array.isArray(parsed.sheetPresets) ? parsed.sheetPresets : [],
       results: Array.isArray(parsed.results) ? parsed.results : []
     };
   } catch {
@@ -114,6 +119,7 @@ function loadStore() {
       answerKeys: { 20: Array(20).fill(''), 30: Array(30).fill('') },
       answerKey: Array(30).fill(''),
       sheetSettings: { ...DEFAULT_SHEET_SETTINGS },
+      sheetPresets: [],
       results: []
     };
   }
@@ -234,14 +240,94 @@ function getSheetEvaluationLabel(settings = store.sheetSettings) { return settin
 function readSheetSettingsFromEditor() {
   return normalizeSheetSettings({ area: ui.sheetArea.value, grade: ui.sheetGrade.value, name: ui.sheetName.value });
 }
-function updateSheetEditorPreview() {
+let sheetPreviewObjectUrl = null;
+async function buildCustomizedSheetSvg(settings = readSheetSettingsFromEditor(), count = QUESTION_COUNT) {
+  const file = count === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
+  const response = await fetch('assets/' + file, { cache: 'no-store' });
+  if (!response.ok) throw new Error('No se pudo cargar la plantilla base.');
+  const xml = new DOMParser().parseFromString(await response.text(), 'image/svg+xml');
+  if (xml.querySelector('parsererror')) throw new Error('La plantilla SVG no se pudo interpretar.');
+  const svg = xml.documentElement, typeText = xml.querySelector('#sheetTypeLabel');
+  const typePill = xml.querySelector('#sheetTypePill'), subjectText = xml.querySelector('#sheetSubjectLine');
+  const title = xml.querySelector('#title'), description = xml.querySelector('#desc');
+  if (!typeText || !typePill || !subjectText) throw new Error('La plantilla no contiene los campos editables esperados.');
+  const label = getSheetEvaluationLabel(settings);
+  typeText.textContent = label;
+  const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
+  typePill.setAttribute('width', String(pillWidth)); typePill.setAttribute('x', String(271 - pillWidth / 2));
+  typeText.setAttribute('font-size', String(Math.max(18, Math.min(38, Math.floor(600 / Math.max(1, label.length))))));
+  const subject = settings.area + ' · Grado ' + settings.grade;
+  subjectText.textContent = subject;
+  subjectText.setAttribute('font-size', String(Math.max(17, Math.min(31, Math.floor(1300 / Math.max(1, subject.length))))));
+  if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
+  if (description) description.textContent = 'Tarjeta QUIZ de ' + count + ' preguntas · ' + label + ' · ' + subject + '.';
+  return new XMLSerializer().serializeToString(svg);
+}
+async function updateSheetEditorPreview() {
   if (!ui.sheetArea || !ui.sheetGrade || !ui.sheetName) return;
   const settings = readSheetSettingsFromEditor();
   if (ui.sheetPreviewType) ui.sheetPreviewType.textContent = getSheetEvaluationLabel(settings) || 'Nombre de la evaluación';
   if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = (settings.area || 'Área o asignatura') + ' · Grado ' + (settings.grade || '—');
   if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
+  if (ui.sheetPreviewImage) {
+    try {
+      const serialized = await buildCustomizedSheetSvg(settings);
+      const nextUrl = URL.createObjectURL(new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' }));
+      const previousUrl = sheetPreviewObjectUrl; sheetPreviewObjectUrl = nextUrl;
+      ui.sheetPreviewImage.src = nextUrl;
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+    } catch (error) { console.warn('No se pudo actualizar la vista previa de la tarjeta:', error); }
+  }
 }
 function saveSheetEditorSettings() { store.sheetSettings = readSheetSettingsFromEditor(); persist(); updateSheetEditorPreview(); }
+function refreshSheetPresetOptions() {
+  if (!ui.sheetPresetSelect) return;
+  const selected = ui.sheetPresetSelect.value;
+  ui.sheetPresetSelect.innerHTML = '<option value="">Selecciona una configuración guardada</option>';
+  (store.sheetPresets || []).forEach((preset, index) => {
+    const option = document.createElement('option'); option.value = String(index); option.textContent = preset.name;
+    ui.sheetPresetSelect.appendChild(option);
+  });
+  if (selected && Number(selected) < (store.sheetPresets || []).length) ui.sheetPresetSelect.value = selected;
+}
+function initializeSheetPresets() {
+  store.sheetPresets = Array.isArray(store.sheetPresets) ? store.sheetPresets : [];
+  refreshSheetPresetOptions();
+  ui.saveSheetPresetBtn?.addEventListener('click', () => {
+    const name = ui.sheetPresetName.value.trim();
+    if (!name) { showToast('Escribe un nombre para guardar la configuración.'); ui.sheetPresetName.focus(); return; }
+    const snapshot = { name: name.slice(0, 50), questionCount: QUESTION_COUNT, assessmentName: store.assessmentName,
+      answerKeys: { 20: normalizeKey(store.answerKeys[20],20), 30: normalizeKey(store.answerKeys[30],30) },
+      sheetSettings: readSheetSettingsFromEditor() };
+    const existing = store.sheetPresets.findIndex(item => item.name.toLowerCase() === snapshot.name.toLowerCase());
+    if (existing >= 0) {
+      if (!confirm('Ya existe una configuración con ese nombre. ¿Deseas reemplazarla?')) return;
+      store.sheetPresets[existing] = snapshot;
+    } else store.sheetPresets.push(snapshot);
+    persist(); refreshSheetPresetOptions(); ui.sheetPresetSelect.value = String(store.sheetPresets.findIndex(item => item.name === snapshot.name));
+    showToast('Configuración guardada en este dispositivo.');
+  });
+  ui.loadSheetPresetBtn?.addEventListener('click', () => {
+    const index = Number(ui.sheetPresetSelect.value), preset = store.sheetPresets[index];
+    if (!preset) { showToast('Selecciona una configuración guardada.'); return; }
+    if (preset.questionCount !== QUESTION_COUNT) changeQuizType(preset.questionCount);
+    store.answerKeys = { 20: normalizeKey(preset.answerKeys?.[20],20), 30: normalizeKey(preset.answerKeys?.[30],30) };
+    store.answerKey = store.answerKeys[QUESTION_COUNT].slice();
+    store.assessmentName = preset.assessmentName || preset.name;
+    ui.keyAssessment.value = store.assessmentName; ui.scanAssessment.value = store.assessmentName;
+    ui.sheetArea.value = preset.sheetSettings?.area || ''; ui.sheetGrade.value = preset.sheetSettings?.grade || '';
+    ui.sheetName.value = preset.sheetSettings?.name || preset.name;
+    store.sheetSettings = readSheetSettingsFromEditor();
+    persist(); renderKeyEditor(); updateQuizTypePresentation(); updateSheetEditorPreview();
+    showToast('Configuración y clave restauradas.');
+  });
+  ui.deleteSheetPresetBtn?.addEventListener('click', () => {
+    const index = Number(ui.sheetPresetSelect.value);
+    if (!store.sheetPresets[index]) { showToast('Selecciona una configuración guardada.'); return; }
+    if (!confirm('¿Eliminar esta configuración guardada?')) return;
+    store.sheetPresets.splice(index,1); persist(); refreshSheetPresetOptions(); showToast('Configuración eliminada.');
+  });
+}
 function initializeSheetEditor() {
   store.sheetSettings = normalizeSheetSettings(store.sheetSettings);
   ui.sheetArea.value = store.sheetSettings.area;
@@ -251,6 +337,7 @@ function initializeSheetEditor() {
   ui.sheetArea.addEventListener('input', saveSheetEditorSettings);
   ui.sheetGrade.addEventListener('input', saveSheetEditorSettings);
   ui.sheetName.addEventListener('input', saveSheetEditorSettings);
+  initializeSheetPresets();
 }
 function slugifySheetPart(value) {
   return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -267,25 +354,7 @@ async function downloadCustomizedSheet(format) {
   if (!settings.grade) { showToast('Escribe el grado antes de descargar.'); ui.sheetGrade.focus(); return; }
   if (!label) { showToast('Escribe el nombre de la evaluación.'); ui.sheetName.focus(); return; }
   try {
-    const file = QUESTION_COUNT === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
-    const response = await fetch('assets/' + file, { cache: 'no-store' });
-    if (!response.ok) throw new Error('No se pudo cargar la plantilla base.');
-    const xml = new DOMParser().parseFromString(await response.text(), 'image/svg+xml');
-    if (xml.querySelector('parsererror')) throw new Error('La plantilla SVG no se pudo interpretar.');
-    const svg = xml.documentElement, typeText = xml.querySelector('#sheetTypeLabel');
-    const typePill = xml.querySelector('#sheetTypePill'), subjectText = xml.querySelector('#sheetSubjectLine');
-    const title = xml.querySelector('#title'), description = xml.querySelector('#desc');
-    if (!typeText || !typePill || !subjectText) throw new Error('La plantilla no contiene los campos editables esperados.');
-    typeText.textContent = label;
-    const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
-    typePill.setAttribute('width', String(pillWidth)); typePill.setAttribute('x', String(271 - pillWidth / 2));
-    typeText.setAttribute('font-size', String(Math.max(18, Math.min(38, Math.floor(600 / Math.max(1, label.length))))));
-    const subject = settings.area + ' · Grado ' + settings.grade;
-    subjectText.textContent = subject;
-    subjectText.setAttribute('font-size', String(Math.max(17, Math.min(31, Math.floor(1300 / Math.max(1, subject.length))))));
-    if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
-    if (description) description.textContent = 'Tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas · ' + label + ' · ' + subject + '.';
-    const serialized = new XMLSerializer().serializeToString(svg);
+    const serialized = await buildCustomizedSheetSvg(settings);
     const baseName = ['QUIZ', QUESTION_COUNT, slugifySheetPart(settings.area), slugifySheetPart(label), slugifySheetPart(settings.grade)].filter(Boolean).join('-');
     if (format === 'svg') triggerDownload(new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' }), baseName + '.svg');
     else {
@@ -294,9 +363,8 @@ async function downloadCustomizedSheet(format) {
         const image = new Image(); image.decoding = 'async'; image.src = svgUrl;
         if (image.decode) await image.decode();
         else await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
-        const vb = (svg.getAttribute('viewBox') || '').trim().split(/[ ,]+/).map(Number);
-        const width = Number(svg.getAttribute('width')) || vb[2] || 1199;
-        const height = Number(svg.getAttribute('height')) || vb[3] || (QUESTION_COUNT === 20 ? 1312 : 1700);
+        const vb = (new DOMParser().parseFromString(serialized, 'image/svg+xml').documentElement.getAttribute('viewBox') || '').trim().split(/[ ,]+/).map(Number);
+        const width = vb[2] || 1199, height = vb[3] || (QUESTION_COUNT === 20 ? 1312 : 1700);
         const canvas = document.createElement('canvas'); canvas.width = width * 2; canvas.height = height * 2;
         const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('No fue posible preparar la imagen.');
         if (format === 'jpg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
@@ -349,6 +417,7 @@ ui.removeImage.addEventListener('click', () => {
   ui.resultPanel.hidden = true;
   currentRead = null;
   currentWarpedPreview = null;
+  if (ui.answerPhotoCanvas) { const ctx = ui.answerPhotoCanvas.getContext('2d'); ctx && ctx.clearRect(0,0,ui.answerPhotoCanvas.width,ui.answerPhotoCanvas.height); }
   clearMessage();
 });
 function handleFileSelect(event) {
@@ -387,6 +456,7 @@ async function processCurrentImage() {
       manuallyChanged: false
     };
     renderResult();
+    renderAnswerPhoto();
     showMessage('Tarjeta reconocida. Revisa las marcas señaladas antes de guardar el resultado.', 'success');
     ui.resultPanel.hidden = false;
     ui.resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -620,14 +690,14 @@ function measureBubble(rgba, width, height, centerX, centerY) {
       const p = (y*width+x)*4, r=rgba[p], g=rgba[p+1], b=rgba[p+2];
       const gray=.299*r+.587*g+.114*b, luminanceDrop=Math.max(0,bgGray-gray);
       const colorDistance=Math.sqrt((bg[0]-r)**2+(bg[1]-g)**2+(bg[2]-b)**2);
-      const signal=Math.max(luminanceDrop,colorDistance*.72);
-      signalSum+=signal; total++; if(signal>=34) ink++; if(signal>=58) strong++;
+      const signal=Math.max(luminanceDrop,colorDistance*.78);
+      signalSum+=signal; total++; if(signal>=18) ink++; if(signal>=38) strong++;
     }
   }
   const meanSignal=signalSum/Math.max(1,total), inkFraction=ink/Math.max(1,total), strongFraction=strong/Math.max(1,total);
-  const score=.48*clamp((meanSignal-8)/72,0,1)+.52*clamp((inkFraction-.035)/.42,0,1);
-  const confidence=clamp(.45*score+.55*clamp((strongFraction-.025)/.28,0,1),0,1);
-  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal >= 24 && inkFraction >= .22 && score >= .25 };
+  const score=.48*clamp((meanSignal-6)/66,0,1)+.52*clamp((inkFraction-.025)/.36,0,1);
+  const confidence=clamp(.45*score+.55*clamp((strongFraction-.02)/.24,0,1),0,1);
+  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal >= 13 && inkFraction >= .15 && score >= .20 };
 }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function isPendingAnswer(item) {
@@ -658,6 +728,7 @@ function renderResult() {
       item.status = 'manual';
       currentRead.manuallyChanged = true;
       renderResult();
+      renderAnswerPhoto();
     });
     answerCell.appendChild(select);
     const keyCell = document.createElement('td'); keyCell.textContent = store.answerKey[index] || '—';
@@ -669,6 +740,39 @@ function renderResult() {
   });
   updateScoreDisplay();
 }
+
+function renderAnswerPhoto() {
+  const canvas = ui.answerPhotoCanvas, warped = currentWarpedPreview;
+  if (!canvas || !warped || !currentRead) return;
+  const scale = 1.35;
+  canvas.width = Math.round(warped.width * scale); canvas.height = Math.round(warped.height * scale);
+  const ctx = canvas.getContext('2d');
+  const source = document.createElement('canvas'); source.width = warped.width; source.height = warped.height;
+  const sourceCtx = source.getContext('2d');
+  const pixels = new ImageData(new Uint8ClampedArray(warped.data), warped.width, warped.height);
+  sourceCtx.putImageData(pixels, 0, 0);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  ctx.save(); ctx.scale(scale, scale);
+  currentRead.answers.forEach((item, index) => {
+    const row = index % ROWS_PER_COLUMN, first = index < ROWS_PER_COLUMN ? 0 : 4;
+    const key = store.answerKey[index] || '';
+    const chosen = item.answer || (item.marked && item.marked.length === 1 ? item.marked[0] : '');
+    const uncertain = isPendingAnswer(item) || item.status === 'multiple';
+    const color = uncertain ? '#e5a323' : chosen && key && chosen === key ? '#13965c' : '#e04755';
+    const drawRing = (letter, stroke, radius = 22) => {
+      if (!letter) return;
+      const option = TEMPLATE.options.indexOf(letter); if (option < 0) return;
+      ctx.beginPath(); ctx.arc(TEMPLATE.bubbleXs[first + option], TEMPLATE.bubbleYs[row], radius, 0, Math.PI * 2);
+      ctx.lineWidth = 5; ctx.strokeStyle = stroke; ctx.stroke();
+    };
+    if (chosen) drawRing(chosen, color);
+    else if (key && item.confirmedBlank) drawRing(key, '#e04755');
+    if (chosen && key && chosen !== key && !uncertain) drawRing(key, '#13965c', 25);
+    if (!chosen && !item.confirmedBlank && key) drawRing(key, '#e5a323', 25);
+  });
+  ctx.restore();
+}
+
 function statusFor(item, index) {
   const key = store.answerKey[index];
   if (!key) return { text: 'Sin clave', className: 'warn' };
@@ -799,6 +903,7 @@ initializeSheetEditor();
 updateQuizTypePresentation();
 renderKeyEditor();
 renderHistory();
+initializeSheetPresets();
 
 // Installable PWA support.
 window.addEventListener('beforeinstallprompt', event => {

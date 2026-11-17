@@ -53,7 +53,7 @@ const ui = {
   installBtn: $('installBtn'),
   scanAssessment: $('scanAssessment'), studentName: $('studentName'), studentCourse: $('studentCourse'), studentId: $('studentId'),
   quizType20: $('quizType20'), quizType30: $('quizType30'), keyQuestionCount: $('keyQuestionCount'),
-  keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), templateLink: $('templateLink'), scanCardCount: $('scanCardCount'),
+  keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), scanCardCount: $('scanCardCount'),
   processBtn: $('processBtn'),
   sheetArea: $('sheetArea'), sheetGrade: $('sheetGrade'), sheetName: $('sheetName'),
   downloadPngBtn: $('downloadPngBtn'), downloadJpgBtn: $('downloadJpgBtn'), downloadSvgBtn: $('downloadSvgBtn'),
@@ -623,9 +623,12 @@ function measureBubble(rgba, width, height, centerX, centerY) {
   const meanSignal=signalSum/Math.max(1,total), inkFraction=ink/Math.max(1,total), strongFraction=strong/Math.max(1,total);
   const score=.48*clamp((meanSignal-8)/72,0,1)+.52*clamp((inkFraction-.035)/.42,0,1);
   const confidence=clamp(.45*score+.55*clamp((strongFraction-.025)/.28,0,1),0,1);
-  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal>=20 && inkFraction>=.105 && score>=.20 };
+  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal >= 24 && inkFraction >= .22 && score >= .25 };
 }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+function isPendingAnswer(item) {
+  return (!item.answer && !item.confirmedBlank) || ['multiple', 'uncertain', 'low'].includes(item.status);
+}
 
 function renderResult() {
   if (!currentRead) return;
@@ -666,6 +669,7 @@ function statusFor(item, index) {
   if (!key) return { text: 'Sin clave', className: 'warn' };
   if (item.status === 'multiple') return { text: 'Doble marca', className: 'warn' };
   if (item.status === 'uncertain' || item.status === 'low') return { text: item.frameAgreement ? 'Revisar ' + item.frameAgreement : 'Revisar', className: 'warn' };
+  if (item.confirmedBlank) return { text: 'Sin marca (' + item.frameAgreement + ')', className: 'bad' };
   if (!item.answer) return { text: 'Sin respuesta', className: 'bad' };
   if (item.manuallyChanged) return { text: item.answer === key ? 'Ajustada ✓' : 'Ajustada', className: item.answer === key ? 'ok' : 'bad' };
   return item.answer === key ? { text: 'Correcta', className: 'ok' } : { text: 'Incorrecta', className: 'bad' };
@@ -674,7 +678,7 @@ function updateScoreDisplay() {
   const keyReady = store.answerKey.every(Boolean);
   const answers = currentRead.answers;
   const correct = keyReady ? answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length : 0;
-  const pending = answers.filter((item, index) => !item.answer || item.status === 'multiple' || item.status === 'uncertain' || item.status === 'low').length;
+  const pending = answers.filter(isPendingAnswer).length;
   const grade = correct * POINTS_PER_CORRECT;
   ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
   ui.scoreDescriptor.textContent = keyReady ? (pending ? `${correct} correctas · nota provisional` : `${correct} de ${QUESTION_COUNT} respuestas correctas`) : 'Configura la clave para obtener la nota';
@@ -694,7 +698,7 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
   if (!currentRead || !store.answerKey.every(Boolean)) return null;
   const student = ui.studentName.value.trim() || 'Sin identificar';
   const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length;
-  const pending = currentRead.answers.filter(item => !item.answer || ['multiple', 'uncertain', 'low'].includes(item.status)).length;
+  const pending = currentRead.answers.filter(isPendingAnswer).length;
   if (pending > 0 && askForPending && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return null;
   const record = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`,
@@ -1031,7 +1035,7 @@ function mergeFrameReads(frameReads) {
     const multipleCount=samples.filter(item=>item.status==='multiple').length;
     const allBlank=samples.filter(item=>item.status==='blank').length, metrics=samples[samples.length-1].metrics;
     if(winnerCount>=4&&multipleCount===0) return {question:index+1,answer:winner,marked:[winner],metrics,status:'ok',confidence:winnerCount/frameReads.length,frameAgreement:winnerCount+'/'+frameReads.length,manuallyChanged:false};
-    if(allBlank>=4&&multipleCount===0&&samples.every(item=>item.status==='blank')) return {question:index+1,answer:null,marked:[],metrics,status:'blank',confidence:allBlank/frameReads.length,frameAgreement:allBlank+'/'+frameReads.length,manuallyChanged:false};
+    if(allBlank>=4&&multipleCount===0&&samples.every(item=>item.status==='blank')) return {question:index+1,answer:null,marked:[],metrics,status:'blank',confirmedBlank:true,confidence:allBlank/frameReads.length,frameAgreement:allBlank+'/'+frameReads.length,manuallyChanged:false};
     return {question:index+1,answer:null,marked:samples.flatMap(item=>item.marked||[]).filter((v,i,a)=>a.indexOf(v)===i),metrics,status:multipleCount>=3?'multiple':'uncertain',confidence:Math.max(winnerCount,allBlank,multipleCount)/frameReads.length,frameAgreement:Math.max(winnerCount,allBlank,multipleCount)+'/'+frameReads.length,manuallyChanged:false};
   });
 }
@@ -1056,7 +1060,7 @@ async function captureAndGradeLive() {
     currentRead={answers,sourceName:'Cámara en vivo · '+frameReads.length+' tomas',detectedAt:new Date().toISOString(),manuallyChanged:false,captureFrames:frameReads.length};
     ui.imageFileName.textContent='Lectura verificada con '+frameReads.length+' tomas';
     ui.photoPreview.src=lastCaptureUrl; ui.imageStage.hidden=false; renderResult();
-    const pending=answers.filter(item=>!item.answer||['multiple','uncertain','low'].includes(item.status)).length;
+    const pending=answers.filter(isPendingAnswer).length;
     stopLiveScanner(true);
     if(pending>0){
       ui.resultPanel.hidden=false;

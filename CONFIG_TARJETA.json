@@ -1,10 +1,11 @@
 {
-  "templateId": "QUIZ-LC10-R20-MOBILE-V1",
-  "assessmentType": "20 preguntas de selección múltiple",
-  "referenceImage": "assets/plantilla_quiz.svg",
+  "templateId": "QUIZ-R30-MOBILE-V1",
+  "brand": "QUIZ",
+  "assessmentType": "30 preguntas de selección múltiple en dos columnas de 15",
+  "referenceImage": "assets/plantilla_quiz_30.svg",
   "referenceSize": {
     "width": 1199,
-    "height": 1312
+    "height": 1700
   },
   "fiducialMarkers": {
     "topLeft": {
@@ -17,11 +18,11 @@
     },
     "bottomRight": {
       "x": 1114,
-      "y": 1237
+      "y": 1603
     },
     "bottomLeft": {
       "x": 86,
-      "y": 1237
+      "y": 1603
     }
   },
   "answerOptions": [
@@ -53,14 +54,18 @@
       867.7,
       926,
       984.7,
-      1043.6
+      1043.6,
+      1102.1,
+      1160.6,
+      1219.1,
+      1277.6,
+      1336.1
     ]
   },
   "scoring": {
-    "questions": 20,
+    "questions": 30,
     "maximumScore": 50,
-    "pointsPerCorrectAnswer": 2.5,
+    "pointsPerCorrectAnswer": 1.66666667,
     "unansweredOrMultipleMarks": 0
-  },
-  "brand": "QUIZ"
+  }
 }

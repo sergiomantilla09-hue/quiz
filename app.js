@@ -784,6 +784,7 @@ async function openLiveScanner() {
   stopLiveScanner(false);
   ui.liveScanner.hidden = false;
   ui.liveScanBtn.disabled = true;
+  ui.liveViewfinder.style.aspectRatio = TEMPLATE.width + ' / ' + TEMPLATE.height;
   setLiveStatus('Alinea los cuatro cuadrados negros con las guías.');
   try {
     liveStream = await navigator.mediaDevices.getUserMedia({

@@ -238,7 +238,7 @@ function updateSheetEditorPreview() {
   if (!ui.sheetArea || !ui.sheetGrade || !ui.sheetName) return;
   const settings = readSheetSettingsFromEditor();
   if (ui.sheetPreviewType) ui.sheetPreviewType.textContent = getSheetEvaluationLabel(settings) || 'Nombre de la evaluación';
-  if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = (settings.area || 'Área o asignatura') + ' · ' + (settings.grade || 'Grado');
+  if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = (settings.area || 'Área o asignatura') + ' · Grado ' + (settings.grade || '—');
   if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
 }
 function saveSheetEditorSettings() { store.sheetSettings = readSheetSettingsFromEditor(); persist(); updateSheetEditorPreview(); }
@@ -280,7 +280,7 @@ async function downloadCustomizedSheet(format) {
     const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
     typePill.setAttribute('width', String(pillWidth)); typePill.setAttribute('x', String(271 - pillWidth / 2));
     typeText.setAttribute('font-size', String(Math.max(18, Math.min(38, Math.floor(600 / Math.max(1, label.length))))));
-    const subject = settings.area + ' · ' + settings.grade;
+    const subject = settings.area + ' · Grado ' + settings.grade;
     subjectText.textContent = subject;
     subjectText.setAttribute('font-size', String(Math.max(17, Math.min(31, Math.floor(1300 / Math.max(1, subject.length))))));
     if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;

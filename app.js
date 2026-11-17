@@ -697,7 +697,7 @@ function measureBubble(rgba, width, height, centerX, centerY) {
   const meanSignal=signalSum/Math.max(1,total), inkFraction=ink/Math.max(1,total), strongFraction=strong/Math.max(1,total);
   const score=.48*clamp((meanSignal-6)/66,0,1)+.52*clamp((inkFraction-.025)/.36,0,1);
   const confidence=clamp(.45*score+.55*clamp((strongFraction-.02)/.24,0,1),0,1);
-  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal >= 13 && inkFraction >= .15 && score >= .20 };
+  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal >= 13 && inkFraction >= .22 && score >= .20 };
 }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function isPendingAnswer(item) {

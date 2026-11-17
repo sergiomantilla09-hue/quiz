@@ -30,7 +30,7 @@
     <main>
         <div class="capture-card">
           <div class="capture-art" aria-hidden="true">
-            <div class="scan-frame"><div class="scan-inner"><span>20</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
+            <div class="scan-frame"><div class="scan-inner"><span>30</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
           </div>
           <div class="capture-copy">
             <div class="capture-title">Escanear tarjeta</div>
@@ -62,7 +62,7 @@
           <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
           <p class="live-footnote">La captura y la calificación se realizan automáticamente al reconocer los cuatro marcadores.</p>
         </section>
-        <a class="template-link" href="assets/plantilla_quiz.svg" download="Tarjeta_Respuestas_QUIZ_LC10-R20-V1.svg">↓ Descargar tarjeta de respuestas QUIZ</a>
+        <a class="template-link" href="assets/plantilla_quiz_30.svg" download="Tarjeta_Respuestas_QUIZ-R30-MOBILE-V1.svg">↓ Descargar tarjeta de respuestas QUIZ</a>
 
 
       <section class="intro">
@@ -108,7 +108,7 @@
         <div id="imageStage" class="image-stage" hidden>
           <div class="stage-header"><span class="stage-dot"></span><span id="imageFileName">Imagen lista</span><button id="removeImage" class="text-btn">Cambiar</button></div>
           <img id="photoPreview" alt="Fotografía de la tarjeta de respuestas">
-          <button id="processBtn" class="btn btn-lime btn-full">Leer las 20 respuestas <span>→</span></button>
+          <button id="processBtn" class="btn btn-lime btn-full">Leer las 30 respuestas <span>→</span></button>
         </div>
 
         <div id="scanMessage" class="message" role="status" hidden></div>
@@ -144,22 +144,22 @@
             <button id="saveResultBtn" class="btn btn-primary">Guardar resultado</button>
             <button id="newScanBtn" class="btn btn-secondary">Siguiente estudiante</button>
           </div>
-          <p class="scale-note">Conversión: cada respuesta correcta vale 2,5 puntos. 20 aciertos = 50,0.</p>
+          <p class="scale-note">Conversión: 30 respuestas · nota máxima 50,0 · cada acierto equivale a 50/30 puntos.</p>
         </div>
       </section>
 
       <section id="keyPanel" class="panel" hidden>
         <div class="section-heading">
           <div><div class="section-kicker">CONFIGURACIÓN</div><h2>Clave de respuestas</h2></div>
-          <span class="step-tag">20 ÍTEMS</span>
+          <span class="step-tag">30 ÍTEMS</span>
         </div>
         <div class="key-explainer"><span class="key-icon">✓</span><div><strong>Define la respuesta correcta.</strong><p>Selecciona A, B, C o D para cada pregunta. La clave queda guardada en este dispositivo.</p></div></div>
         <label class="field key-title-field"><span>Nombre de la evaluación</span><input id="keyAssessment" type="text" maxlength="70" placeholder="Nombre de la prueba"></label>
         <div class="key-columns">
-          <div class="key-column"><div class="key-column-head"><strong>01—10</strong><span>Preguntas</span></div><div id="keyLeft" class="key-list"></div></div>
-          <div class="key-column"><div class="key-column-head"><strong>11—20</strong><span>Preguntas</span></div><div id="keyRight" class="key-list"></div></div>
+          <div class="key-column"><div class="key-column-head"><strong>01—15</strong><span>Preguntas</span></div><div id="keyLeft" class="key-list"></div></div>
+          <div class="key-column"><div class="key-column-head"><strong>16—30</strong><span>Preguntas</span></div><div id="keyRight" class="key-list"></div></div>
         </div>
-        <div class="key-footer"><span id="keyProgress">0 de 20 definidas</span><button id="saveKeyBtn" class="btn btn-primary">Guardar clave</button></div>
+        <div class="key-footer"><span id="keyProgress">0 de 30 definidas</span><button id="saveKeyBtn" class="btn btn-primary">Guardar clave</button></div>
         <p class="small-muted">Puedes cambiar la clave cuando comiences otra evaluación. Los resultados ya guardados no se modifican.</p>
       </section>
 
@@ -189,7 +189,7 @@
       <h2 id="dialogTitle">Resultado del estudiante</h2>
       <p id="dialogStudent" class="dialog-student"></p>
       <div class="dialog-score"><strong id="dialogScore">0.0</strong><span>/ 50</span></div>
-      <div id="dialogCorrect" class="dialog-correct">0 de 20 respuestas correctas</div>
+      <div id="dialogCorrect" class="dialog-correct">0 de 30 respuestas correctas</div>
       <p id="dialogNote" class="dialog-note">Resultado guardado en el historial de este dispositivo.</p>
       <button id="dialogOkBtn" class="btn btn-primary dialog-ok">OK · Siguiente estudiante</button>
     </div>

@@ -207,3 +207,21 @@ main>.template-link{margin-top:8px;margin-bottom:4px}
  .sheet-download-heading small{text-align:left}
  .sheet-format-btn{min-height:58px}
 }
+
+/* QUIZ 2.0: complete printable preview, reusable assessment presets and annotated answer image */
+.sheet-preview-full{padding:12px;background:#f6f5fa;border:1px solid #e7e2f0;border-radius:14px}
+.sheet-preview-full img{display:block;width:100%;height:auto;max-height:760px;object-fit:contain;object-position:top center;background:#fff;border:1px solid #e5e3eb;border-radius:8px}
+.sheet-presets{margin:16px 0;padding:14px;border:1px solid #e8e4f0;border-radius:14px;background:#faf9fc}
+.sheet-preset-controls{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-top:9px}
+.sheet-preset-controls select{min-width:0;border:1px solid #e1deed;border-radius:9px;background:#fff;color:var(--navy);padding:8px;font-size:10px}
+.answer-photo-card{margin:18px 0 22px;padding:14px;border:1px solid #e6e3ed;border-radius:16px;background:#fbfaff}
+.answer-photo-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.answer-photo-heading h3{margin:0;color:var(--navy);font-size:14px}
+.answer-photo-heading p{margin:4px 0 0;color:var(--muted);font-size:10px;line-height:1.45}
+.answer-photo-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:9px;color:var(--muted);white-space:nowrap}
+.answer-photo-legend span{display:flex;align-items:center;gap:4px}
+.answer-photo-legend i{display:inline-block;width:9px;height:9px;border-radius:50%}
+.legend-correct{background:#13965c}.legend-wrong{background:#e04755}.legend-review{background:#e5a323}
+.answer-photo-viewport{max-height:680px;overflow:auto;text-align:center;border:1px solid #e4e1eb;border-radius:10px;background:#ecebf0;padding:8px}
+.answer-photo-viewport canvas{display:block;width:auto;max-width:100%;height:auto;max-height:660px;margin:0 auto;background:white;box-shadow:0 2px 12px #1b23401a}
+@media(max-width:620px){.sheet-preset-controls{grid-template-columns:1fr 1fr}.sheet-preset-controls select{grid-column:1/-1;grid-row:1}.answer-photo-heading{display:block}.answer-photo-legend{margin-top:9px}.answer-photo-viewport{max-height:520px}.answer-photo-viewport canvas{max-height:500px}}

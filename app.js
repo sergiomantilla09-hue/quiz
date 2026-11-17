@@ -42,6 +42,14 @@ let ROWS_PER_COLUMN = 15;
 let POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
 let TEMPLATE = TEMPLATES[30];
 const DEFAULT_ASSESSMENT = 'Recuperación Lengua Castellana · Grado 10.º';
+const DEFAULT_SHEET_SETTINGS = {
+  area: 'Lengua Castellana',
+  grade: '10.º',
+  evaluationType: 'Recuperación',
+  customLabel: ''
+};
+const SHEET_GRADES = ['1.º','2.º','3.º','4.º','5.º','6.º','7.º','8.º','9.º','10.º','11.º'];
+const SHEET_EVALUATION_TYPES = ['Recuperación','Evaluación 1','Evaluación 2','Nivelación'];
 
 const $ = (id) => document.getElementById(id);
 const ui = {
@@ -52,6 +60,10 @@ const ui = {
   quizType20: $('quizType20'), quizType30: $('quizType30'), keyQuestionCount: $('keyQuestionCount'),
   keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), templateLink: $('templateLink'), scanCardCount: $('scanCardCount'),
   processBtn: $('processBtn'),
+  sheetArea: $('sheetArea'), sheetGrade: $('sheetGrade'), sheetEvaluationType: $('sheetEvaluationType'),
+  sheetCustomLabelField: $('sheetCustomLabelField'), sheetCustomLabel: $('sheetCustomLabel'),
+  sheetPreviewType: $('sheetPreviewType'), sheetPreviewSubject: $('sheetPreviewSubject'),
+  sheetPreviewCount: $('sheetPreviewCount'), sheetDownloadMeta: $('sheetDownloadMeta'),
   cameraBtn: $('cameraBtn'), galleryBtn: $('galleryBtn'), cameraInput: $('cameraInput'), galleryInput: $('galleryInput'),
   imageStage: $('imageStage'), imageFileName: $('imageFileName'), photoPreview: $('photoPreview'), processBtn: $('processBtn'), removeImage: $('removeImage'),
   scanMessage: $('scanMessage'), resultPanel: $('resultPanel'), resultStudent: $('resultStudent'), resultAssessment: $('resultAssessment'), reviewBadge: $('reviewBadge'),
@@ -72,6 +84,16 @@ function normalizeKey(values, count) {
   return [...source.slice(0, count), ...Array(Math.max(0, count - source.length)).fill('')]
     .map(value => TEMPLATE_OPTIONS.includes(value) ? value : '');
 }
+function normalizeSheetSettings(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  const area = typeof source.area === 'string' ? source.area.trim().slice(0, 38) : DEFAULT_SHEET_SETTINGS.area;
+  const grade = SHEET_GRADES.includes(source.grade) ? source.grade : DEFAULT_SHEET_SETTINGS.grade;
+  const evaluationType = [...SHEET_EVALUATION_TYPES, 'custom'].includes(source.evaluationType)
+    ? source.evaluationType
+    : DEFAULT_SHEET_SETTINGS.evaluationType;
+  const customLabel = typeof source.customLabel === 'string' ? source.customLabel.trim().slice(0, 18) : '';
+  return { area: area || DEFAULT_SHEET_SETTINGS.area, grade, evaluationType, customLabel };
+}
 function loadStore() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -89,6 +111,7 @@ function loadStore() {
       questionCount,
       answerKeys,
       answerKey: answerKeys[questionCount].slice(),
+      sheetSettings: normalizeSheetSettings(parsed.sheetSettings),
       results: Array.isArray(parsed.results) ? parsed.results : []
     };
   } catch {
@@ -97,6 +120,7 @@ function loadStore() {
       questionCount: 30,
       answerKeys: { 20: Array(20).fill(''), 30: Array(30).fill('') },
       answerKey: Array(30).fill(''),
+      sheetSettings: { ...DEFAULT_SHEET_SETTINGS },
       results: []
     };
   }
@@ -190,8 +214,10 @@ function updateQuizTypePresentation() {
     const version = QUESTION_COUNT === 20 ? 'R20' : 'R30';
     ui.templateLink.href = 'assets/' + file;
     ui.templateLink.download = 'Tarjeta_Respuestas_QUIZ-' + version + '-MOBILE-V1.svg';
-    ui.templateLink.textContent = '↓ Descargar tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas';
   }
+  if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
+  if (ui.sheetDownloadMeta) ui.sheetDownloadMeta.textContent = 'QUIZ · ' + QUESTION_COUNT + ' preguntas · SVG listo para imprimir';
+  updateSheetEditorPreview();
 }
 function changeQuizType(nextCount) {
   if (!QUESTION_COUNTS.includes(nextCount) || nextCount === QUESTION_COUNT) return;
@@ -216,6 +242,116 @@ function changeQuizType(nextCount) {
 }
 ui.quizType20.addEventListener('change', () => { if (ui.quizType20.checked) changeQuizType(20); });
 ui.quizType30.addEventListener('change', () => { if (ui.quizType30.checked) changeQuizType(30); });
+
+function getSheetEvaluationLabel(settings = store.sheetSettings) {
+  if (settings.evaluationType === 'custom') return settings.customLabel.trim();
+  return settings.evaluationType;
+}
+function readSheetSettingsFromEditor() {
+  return normalizeSheetSettings({
+    area: ui.sheetArea.value,
+    grade: ui.sheetGrade.value,
+    evaluationType: ui.sheetEvaluationType.value,
+    customLabel: ui.sheetCustomLabel.value
+  });
+}
+function updateSheetEditorPreview() {
+  if (!ui.sheetArea || !ui.sheetGrade || !ui.sheetEvaluationType) return;
+  const settings = readSheetSettingsFromEditor();
+  const label = getSheetEvaluationLabel(settings) || 'Tipo de evaluación';
+  const subject = settings.area + ' · Grado ' + settings.grade;
+  if (ui.sheetPreviewType) ui.sheetPreviewType.textContent = label;
+  if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = subject;
+  if (ui.sheetCustomLabelField) ui.sheetCustomLabelField.hidden = settings.evaluationType !== 'custom';
+  if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
+}
+function saveSheetEditorSettings() {
+  store.sheetSettings = readSheetSettingsFromEditor();
+  persist();
+  updateSheetEditorPreview();
+}
+function initializeSheetEditor() {
+  store.sheetSettings = normalizeSheetSettings(store.sheetSettings);
+  ui.sheetArea.value = store.sheetSettings.area;
+  ui.sheetGrade.value = store.sheetSettings.grade;
+  ui.sheetEvaluationType.value = store.sheetSettings.evaluationType;
+  ui.sheetCustomLabel.value = store.sheetSettings.customLabel;
+  updateSheetEditorPreview();
+  ui.sheetArea.addEventListener('input', saveSheetEditorSettings);
+  ui.sheetGrade.addEventListener('change', saveSheetEditorSettings);
+  ui.sheetEvaluationType.addEventListener('change', saveSheetEditorSettings);
+  ui.sheetCustomLabel.addEventListener('input', saveSheetEditorSettings);
+}
+function slugifySheetPart(value) {
+  return String(value).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+}
+async function downloadCustomizedSheet(event) {
+  event.preventDefault();
+  const settings = readSheetSettingsFromEditor();
+  const label = getSheetEvaluationLabel(settings);
+  if (!settings.area) {
+    showToast('Escribe el área o asignatura antes de descargar.');
+    ui.sheetArea.focus();
+    return;
+  }
+  if (!label) {
+    showToast('Escribe el nombre del tipo de evaluación.');
+    ui.sheetCustomLabel.focus();
+    return;
+  }
+  try {
+    const file = QUESTION_COUNT === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
+    const response = await fetch('assets/' + file, { cache: 'no-store' });
+    if (!response.ok) throw new Error('No se pudo cargar la plantilla base.');
+    const source = await response.text();
+    const xml = new DOMParser().parseFromString(source, 'image/svg+xml');
+    if (xml.querySelector('parsererror')) throw new Error('La plantilla SVG no se pudo interpretar.');
+    const typeText = xml.querySelector('#sheetTypeLabel');
+    const typePill = xml.querySelector('#sheetTypePill');
+    const subjectText = xml.querySelector('#sheetSubjectLine');
+    const title = xml.querySelector('#title');
+    const description = xml.querySelector('#desc');
+    if (!typeText || !typePill || !subjectText) throw new Error('La plantilla no contiene los campos editables esperados.');
+
+    typeText.textContent = label;
+    const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
+    typePill.setAttribute('width', String(pillWidth));
+    typePill.setAttribute('x', String(271 - pillWidth / 2));
+    typeText.setAttribute('font-size', label.length > 15 ? '31' : label.length > 13 ? '34' : '38');
+
+    const subject = settings.area + ' · Grado ' + settings.grade;
+    subjectText.textContent = subject;
+    const subjectFont = subject.length > 40 ? 22 : subject.length > 34 ? 25 : subject.length > 29 ? 28 : 31;
+    subjectText.setAttribute('font-size', String(subjectFont));
+    if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
+    if (description) description.textContent = 'Tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas · ' + label + ' · ' + subject + '.';
+
+    const serialized = new XMLSerializer().serializeToString(xml.documentElement);
+    const blob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = [
+      'QUIZ', QUESTION_COUNT,
+      slugifySheetPart(settings.area),
+      slugifySheetPart(label),
+      slugifySheetPart(settings.grade)
+    ].filter(Boolean).join('-') + '.svg';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+    store.sheetSettings = settings;
+    persist();
+    showToast('Hoja personalizada descargada: ' + QUESTION_COUNT + ' preguntas.');
+  } catch (error) {
+    console.error('Quiz sheet download:', error);
+    showToast(error && error.message ? error.message : 'No se pudo preparar la hoja personalizada.');
+  }
+}
+ui.templateLink.addEventListener('click', downloadCustomizedSheet);
+
 
 ui.saveKeyBtn.addEventListener('click', () => {
   const title = ui.keyAssessment.value.trim() || DEFAULT_ASSESSMENT;
@@ -700,6 +836,7 @@ POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
 TEMPLATE = TEMPLATES[QUESTION_COUNT];
 store.answerKey = normalizeKey(store.answerKeys[QUESTION_COUNT], QUESTION_COUNT);
 ui.scanAssessment.value = store.assessmentName;
+initializeSheetEditor();
 updateQuizTypePresentation();
 renderKeyEditor();
 renderHistory();

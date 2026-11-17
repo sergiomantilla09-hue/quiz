@@ -200,14 +200,16 @@ function testFullSheetRead(count, selected) {
     }
   }
   const read = omrSandbox.readAnswerBubbles(pixels, width, height);
-  for (const [question, option] of selected) {
-    assert.equal(read[question].answer, template.options[option], 'Lectura incorrecta en QUIZ ' + count + ', pregunta ' + (question + 1));
-    assert.equal(read[question].status, 'ok');
+  for (const [question, option, color] of selected) {
+    const lowConfidence = color.every(channel => channel === 185);
+    assert.equal(read[question].answer, lowConfidence ? null : template.options[option], 'Lectura incorrecta en QUIZ ' + count + ', pregunta ' + (question + 1));
+    assert.equal(read[question].status, lowConfidence ? 'low' : 'ok');
+    if (lowConfidence) assert.deepEqual(read[question].marked, [template.options[option]], 'Debe mostrar la posible respuesta para confirmación');
   }
   assert.equal(read.length, count);
 }
-testFullSheetRead(20, [[0, 1, [20, 75, 220]], [19, 3, [220, 35, 35]]]);
-testFullSheetRead(30, [[0, 2, [20, 20, 20]], [29, 3, [20, 75, 220]]]);
+testFullSheetRead(20, [[0, 1, [20, 75, 220]], [19, 3, [220, 35, 35]], [5, 2, [185, 185, 185]]]);
+testFullSheetRead(30, [[0, 2, [20, 20, 20]], [29, 3, [20, 75, 220]], [9, 0, [185, 185, 185]]]);
 omrSandbox.TEMPLATE = { options: ['A', 'B', 'C', 'D'] };
 omrSandbox.QUESTION_COUNT = 20;
 omrSandbox.ROWS_PER_COLUMN = 10;

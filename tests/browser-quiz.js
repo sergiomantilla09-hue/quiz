@@ -81,7 +81,8 @@ const { chromium } = require('playwright');
     assert.ok(svgText.includes('Recuperación tercer periodo'));
     assert.ok(svgText.includes('Matemáticas · Grado 10-02'));
 
-    await page.locator('#quizType20').check();
+    await page.locator('label.quiz-type-choice').first().click();
+    assert.equal(await page.locator('#quizType20').isChecked(), true);
     assert.equal(await page.locator('#sheetPreviewCount').textContent(), '20 PREGUNTAS');
     const png20Download = page.waitForEvent('download');
     await page.locator('#downloadPngBtn').click();

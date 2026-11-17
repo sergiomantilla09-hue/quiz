@@ -45,8 +45,16 @@ const { chromium } = require('playwright');
     await page.locator('#sheetArea').fill('Matemáticas');
     await page.locator('#sheetGrade').fill('10-02');
     await page.locator('#sheetName').fill('Recuperación tercer periodo');
-    assert.equal(await page.locator('#sheetPreviewType').textContent(), 'Recuperación tercer periodo');
-    assert.equal(await page.locator('#sheetPreviewSubject').textContent(), 'Matemáticas · Grado 10-02');
+    await page.locator('#sheetPresetName').fill('Matemáticas 10-02 · Recuperación');
+    await page.locator('#saveSheetPresetBtn').click();
+    assert.equal(await page.locator('#sheetPresetSelect option').count(), 2, 'Debe guardar una configuración reutilizable');
+    await page.locator('#sheetArea').fill('Historia');
+    await page.locator('#sheetPresetSelect').selectOption('0');
+    await page.locator('#loadSheetPresetBtn').click();
+    assert.equal(await page.locator('#sheetArea').inputValue(), 'Matemáticas', 'Debe restaurar área desde configuración guardada');
+    assert.equal(await page.locator('#sheetName').inputValue(), 'Recuperación tercer periodo');
+    assert.ok(await page.locator('#sheetPreviewImage').getAttribute('src'), 'La vista previa debe renderizar la hoja completa');
+    assert.equal(await page.locator('#sheetPreviewImage').evaluate(img => img.naturalWidth), 1199, 'La vista previa debe usar la plantilla real');
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('[data-tab="key"]').click();
@@ -85,6 +93,7 @@ const { chromium } = require('playwright');
     assert.match(svgText, /<svg[\s>]/);
     assert.ok(svgText.includes('Recuperación tercer periodo'));
     assert.ok(svgText.includes('Matemáticas · Grado 10-02'));
+    assert.ok(svgText.includes('Fecha:'), 'La hoja descargada debe incluir el espacio para fecha');
 
     process.stdout.write('Browser: cambiando a QUIZ 20\\n');
     await page.locator('label.quiz-type-choice').first().click();

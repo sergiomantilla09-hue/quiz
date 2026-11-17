@@ -30,7 +30,7 @@
     <main>
         <div class="capture-card">
           <div class="capture-art" aria-hidden="true">
-            <div class="scan-frame"><div class="scan-inner"><span>30</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
+            <div class="scan-frame"><div class="scan-inner"><span id="scanCardCount">30</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
           </div>
           <div class="capture-copy">
             <div class="capture-title">Escanear tarjeta</div>
@@ -62,7 +62,7 @@
           <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
           <p class="live-footnote">La captura y la calificación se realizan automáticamente al reconocer los cuatro marcadores.</p>
         </section>
-        <a class="template-link" href="assets/plantilla_quiz_30.svg" download="Tarjeta_Respuestas_QUIZ-R30-MOBILE-V1.svg">↓ Descargar tarjeta de respuestas QUIZ</a>
+        <a id="templateLink" class="template-link" href="assets/plantilla_quiz_30.svg" download="Tarjeta_Respuestas_QUIZ-R30-MOBILE-V1.svg">↓ Descargar tarjeta QUIZ de 30 preguntas</a>
 
 
       <section class="intro">
@@ -151,13 +151,32 @@
       <section id="keyPanel" class="panel" hidden>
         <div class="section-heading">
           <div><div class="section-kicker">CONFIGURACIÓN</div><h2>Clave de respuestas</h2></div>
-          <span class="step-tag">30 ÍTEMS</span>
+          <span id="keyQuestionCount" class="step-tag">30 ÍTEMS</span>
+        </div>
+        <div class="quiz-type-picker" role="group" aria-labelledby="quizTypeLabel">
+          <div class="quiz-type-heading">
+            <div><span class="section-kicker">FORMATO DE LA PRUEBA</span><strong id="quizTypeLabel">¿Cuántas preguntas tiene esta evaluación?</strong></div>
+            <span class="quiz-type-hint">Selecciona el formato de la hoja</span>
+          </div>
+          <div class="quiz-type-options">
+            <label class="quiz-type-choice">
+              <input id="quizType20" type="radio" name="quizType" value="20">
+              <span class="quiz-type-choice-main"><strong>20 preguntas</strong><small>2 columnas · 10 por lado</small></span>
+              <span class="quiz-type-check">✓</span>
+            </label>
+            <label class="quiz-type-choice">
+              <input id="quizType30" type="radio" name="quizType" value="30" checked>
+              <span class="quiz-type-choice-main"><strong>30 preguntas</strong><small>2 columnas · 15 por lado</small></span>
+              <span class="quiz-type-check">✓</span>
+            </label>
+          </div>
+          <p class="quiz-type-warning">La tarjeta que escanees debe coincidir con el formato seleccionado. Quiz avisará si presentas una hoja de otro tipo.</p>
         </div>
         <div class="key-explainer"><span class="key-icon">✓</span><div><strong>Define la respuesta correcta.</strong><p>Selecciona A, B, C o D para cada pregunta. La clave queda guardada en este dispositivo.</p></div></div>
         <label class="field key-title-field"><span>Nombre de la evaluación</span><input id="keyAssessment" type="text" maxlength="70" placeholder="Nombre de la prueba"></label>
         <div class="key-columns">
-          <div class="key-column"><div class="key-column-head"><strong>01—15</strong><span>Preguntas</span></div><div id="keyLeft" class="key-list"></div></div>
-          <div class="key-column"><div class="key-column-head"><strong>16—30</strong><span>Preguntas</span></div><div id="keyRight" class="key-list"></div></div>
+          <div class="key-column"><div class="key-column-head"><strong id="keyLeftLabel">01—15</strong><span>Preguntas</span></div><div id="keyLeft" class="key-list"></div></div>
+          <div class="key-column"><div class="key-column-head"><strong id="keyRightLabel">16—30</strong><span>Preguntas</span></div><div id="keyRight" class="key-list"></div></div>
         </div>
         <div class="key-footer"><span id="keyProgress">0 de 30 definidas</span><button id="saveKeyBtn" class="btn btn-primary">Guardar clave</button></div>
         <p class="small-muted">Puedes cambiar la clave cuando comiences otra evaluación. Los resultados ya guardados no se modifican.</p>

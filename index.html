@@ -77,7 +77,8 @@
             <div class="capture-title">Fotografía de la tarjeta</div>
             <p>Fotografía la tarjeta completa, en vertical y con buena luz. Rellena un solo círculo, sin X ni chulitos; conserva visibles los cuatro marcadores.</p>
             <div class="capture-actions">
-              <button id="cameraBtn" class="btn btn-primary"> <span>▣</span> Tomar foto</button>
+              <button id="liveScanBtn" class="btn btn-lime">◎ Escaneo guiado</button>
+              <button id="cameraBtn" class="btn btn-secondary">Tomar foto</button>
               <button id="galleryBtn" class="btn btn-secondary">Elegir imagen</button>
             </div>
           </div>
@@ -85,6 +86,26 @@
           <input id="galleryInput" type="file" accept="image/*" hidden>
         </div>
         <a class="template-link" href="assets/plantilla_balbinista.svg" download="Tarjeta_Respuestas_Balbino_BG-LC10-R20-MOBILE-V1.svg">↓ Descargar la tarjeta compatible con esta app</a>
+
+        <section id="liveScanner" class="live-scanner" hidden aria-label="Escáner guiado en vivo">
+          <div class="live-scanner-head">
+            <div><div class="section-kicker">CÁMARA EN VIVO</div><strong>Encuadra la tarjeta</strong></div>
+            <button id="closeLiveScannerBtn" class="text-btn">Cerrar cámara ✕</button>
+          </div>
+          <p class="live-instruction">Alinea los cuatro cuadrados negros de la tarjeta con las guías de las esquinas.</p>
+          <div id="liveViewfinder" class="live-viewfinder">
+            <video id="liveVideo" autoplay muted playsinline></video>
+            <div id="liveGuide" class="live-guide">
+              <span class="live-target tl"></span><span class="live-target tr"></span>
+              <span class="live-target bl"></span><span class="live-target br"></span>
+              <div class="live-guide-center"><span>QUIZ</span><small>COLEGIO BALBINO GARCÍA</small></div>
+            </div>
+            <div id="liveLockBadge" class="live-lock-badge">Buscando los 4 marcadores</div>
+          </div>
+          <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
+          <button id="liveCaptureBtn" class="btn btn-primary btn-full live-capture-btn" disabled>Esperando los cuatro marcadores…</button>
+          <p class="live-footnote">Mantén el celular quieto. Cuando los cuatro puntos se reconozcan, podrás capturar y calificar.</p>
+        </section>
 
         <div id="imageStage" class="image-stage" hidden>
           <div class="stage-header"><span class="stage-dot"></span><span id="imageFileName">Imagen lista</span><button id="removeImage" class="text-btn">Cambiar</button></div>

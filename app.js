@@ -665,7 +665,7 @@ function statusFor(item, index) {
   const key = store.answerKey[index];
   if (!key) return { text: 'Sin clave', className: 'warn' };
   if (item.status === 'multiple') return { text: 'Doble marca', className: 'warn' };
-  if (item.status === 'uncertain' || item.status === 'low') return { text: 'Revisar', className: 'warn' };
+  if (item.status === 'uncertain' || item.status === 'low') return { text: item.frameAgreement ? 'Revisar ' + item.frameAgreement : 'Revisar', className: 'warn' };
   if (!item.answer) return { text: 'Sin respuesta', className: 'bad' };
   if (item.manuallyChanged) return { text: item.answer === key ? 'Ajustada ✓' : 'Ajustada', className: item.answer === key ? 'ok' : 'bad' };
   return item.answer === key ? { text: 'Correcta', className: 'ok' } : { text: 'Incorrecta', className: 'bad' };
@@ -677,7 +677,7 @@ function updateScoreDisplay() {
   const pending = answers.filter((item, index) => !item.answer || item.status === 'multiple' || item.status === 'uncertain' || item.status === 'low').length;
   const grade = correct * POINTS_PER_CORRECT;
   ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
-  ui.scoreDescriptor.textContent = keyReady ? `${correct} de ${QUESTION_COUNT} respuestas correctas` : 'Configura la clave para obtener la nota';
+  ui.scoreDescriptor.textContent = keyReady ? (pending ? `${correct} correctas · nota provisional` : `${correct} de ${QUESTION_COUNT} respuestas correctas`) : 'Configura la clave para obtener la nota';
   ui.correctCount.textContent = `${correct} correctas`;
   ui.invalidCount.textContent = `${pending} por revisar`;
   ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
@@ -817,6 +817,7 @@ let liveStream = null;
 let liveFrameRequest = 0;
 let liveLastDetection = 0;
 let liveStableFrames = 0;
+let livePreviousMarkerCenters = null;
 let liveMarkersReady = false;
 let liveCaptureTriggered = false;
 let liveBusy = false;
@@ -840,6 +841,7 @@ function stopLiveScanner(hide = true) {
   liveMarkersReady = false;
   liveCaptureTriggered = false;
   liveStableFrames = 0;
+  livePreviousMarkerCenters = null;
   if (ui.liveViewfinder) ui.liveViewfinder.classList.remove('locked');
   if (ui.liveLockBadge) ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
   if (ui.liveScanBtn) ui.liveScanBtn.disabled = false;
@@ -888,6 +890,7 @@ async function openLiveScanner() {
     requestAnimationFrame(updateLiveGuideGeometry);
     liveLastDetection = 0;
     liveStableFrames = 0;
+    livePreviousMarkerCenters = null;
     liveMarkersReady = false;
     liveCaptureTriggered = false;
     liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
@@ -973,7 +976,12 @@ function liveDetectionLoop(timestamp) {
     const frame = ctx.getImageData(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
     const liveMarkers = detectMarkers(frame.data, frame.width, frame.height);
     verifySelectedQuizType(liveMarkers);
-    liveStableFrames += 1;
+    const markerCenters = ['tl', 'tr', 'br', 'bl'].map(key => liveMarkers[key]);
+    const drift = livePreviousMarkerCenters
+      ? Math.max(...markerCenters.map((point, index) => distanceBetween(point, livePreviousMarkerCenters[index])))
+      : Infinity;
+    liveStableFrames = drift <= 8 ? liveStableFrames + 1 : 1;
+    livePreviousMarkerCenters = markerCenters.map(point => ({ x: point.x, y: point.y }));
     if (liveStableFrames >= 5 && !liveCaptureTriggered) {
       liveMarkersReady = true;
       liveCaptureTriggered = true;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quiz-pwa-v15';
+const CACHE_NAME = 'quiz-pwa-v16';
 const APP_FILES = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './assets/icon-180.png', './assets/icon-192.png', './assets/icon-192.svg', './assets/quiz-mark.svg',

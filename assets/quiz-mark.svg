@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Quiz">
+  <defs>
+    <linearGradient id="qg" x1="18" y1="12" x2="103" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#263B7B"/><stop offset="1" stop-color="#101B46"/>
+    </linearGradient>
+    <linearGradient id="lime" x1="72" y1="10" x2="98" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8FB76"/><stop offset="1" stop-color="#BCE52E"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="114" height="114" rx="34" fill="url(#qg)"/>
+  <path d="M60 22c-20.99 0-38 17.01-38 38s17.01 38 38 38 38-17.01 38-38S80.99 22 60 22Zm0 13.5c13.53 0 24.5 10.97 24.5 24.5S73.53 84.5 60 84.5 35.5 73.53 35.5 60 46.47 35.5 60 35.5Z" fill="#fff"/>
+  <path d="M75.7 24.8a38 38 0 0 1 10.9 7.2L72.5 49.1a15.2 15.2 0 0 0-20.2-8.4l-9.2-21.2a38 38 0 0 1 32.6 5.3Z" fill="url(#lime)"/>
+  <path d="m72.5 72.2 26.8 26.4-9.6 9.6-27-26.6a24.4 24.4 0 0 0 9.8-9.4Z" fill="url(#lime)"/>
+  <path d="M22 48V30a8 8 0 0 1 8-8h18M98 48V30a8 8 0 0 0-8-8H72M22 72v18a8 8 0 0 0 8 8h18" fill="none" stroke="#D8F451" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="60" cy="60" r="5.5" fill="#D8F451"/>
+</svg>

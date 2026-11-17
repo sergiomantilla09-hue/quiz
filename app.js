@@ -650,6 +650,7 @@ function renderResult() {
     select.addEventListener('change', () => {
       item.answer = select.value || null;
       item.manuallyChanged = true;
+      item.confirmedBlank = false;
       item.status = 'manual';
       currentRead.manuallyChanged = true;
       renderResult();

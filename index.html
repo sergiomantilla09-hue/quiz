@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111d4a">
-  <meta name="description" content="Lector móvil de hojas de respuestas del Colegio Balbino García.">
+  <meta name="description" content="Lector inteligente de hojas de respuestas.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Quiz">
@@ -18,11 +18,10 @@
   <div class="app-shell">
     <header class="topbar">
       <div class="brand-lockup">
-        <div class="brand-mark" aria-hidden="true"><span></span><i></i></div>
+        <img class="quiz-logo" src="assets/quiz-mark.svg" alt="">
         <div>
-          <div class="brand-kicker">COLEGIO</div>
-          <div class="brand-name">Balbino García</div>
-          <div class="brand-sub">Evaluación inteligente</div>
+          <div class="brand-name">QUIZ</div>
+          <div class="brand-sub">Escáner inteligente</div>
         </div>
       </div>
       <button id="installBtn" class="install-btn" hidden>Instalar app</button>
@@ -32,7 +31,7 @@
       <section class="intro">
         <div class="eyebrow"><span class="eyebrow-dot"></span> LECTOR DE RESPUESTAS</div>
         <h1>Califica con una <em>fotografía.</em></h1>
-        <p>Captura la tarjeta Balbino, revisa las marcas y obtén la nota automáticamente.</p>
+        <p>Escanea una tarjeta, reconoce las respuestas y obtén la nota al instante.</p>
       </section>
 
       <nav class="tabs" aria-label="Secciones">
@@ -75,7 +74,7 @@
           </div>
           <div class="capture-copy">
             <div class="capture-title">Fotografía de la tarjeta</div>
-            <p>Fotografía la tarjeta completa, en vertical y con buena luz. Rellena un solo círculo, sin X ni chulitos; conserva visibles los cuatro marcadores.</p>
+            <p>Alinea los cuatro marcadores. Quiz captura y califica automáticamente cuando reconoce la tarjeta.</p>
             <div class="capture-actions">
               <button id="liveScanBtn" class="btn btn-lime">◎ Escaneo guiado</button>
               <button id="cameraBtn" class="btn btn-secondary">Tomar foto</button>
@@ -98,13 +97,12 @@
             <div id="liveGuide" class="live-guide">
               <span class="live-target tl"></span><span class="live-target tr"></span>
               <span class="live-target bl"></span><span class="live-target br"></span>
-              <div class="live-guide-center"><span>QUIZ</span><small>COLEGIO BALBINO GARCÍA</small></div>
+              <div class="live-guide-center"><img src="assets/quiz-mark.svg" alt=""><span>QUIZ</span><small>ESCÁNER INTELIGENTE</small></div>
             </div>
             <div id="liveLockBadge" class="live-lock-badge">Buscando los 4 marcadores</div>
           </div>
           <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
-          <button id="liveCaptureBtn" class="btn btn-primary btn-full live-capture-btn" disabled>Esperando los cuatro marcadores…</button>
-          <p class="live-footnote">Mantén el celular quieto. Cuando los cuatro puntos se reconozcan, podrás capturar y calificar.</p>
+          <p class="live-footnote">La captura y la calificación se realizan automáticamente al reconocer los cuatro marcadores.</p>
         </section>
 
         <div id="imageStage" class="image-stage" hidden>
@@ -182,7 +180,19 @@
       </section>
     </main>
 
-    <footer class="app-footer"><span class="footer-leaf">✳</span> QUIZ <span class="footer-sep">·</span> COLEGIO BALBINO GARCÍA <span class="version">v1.0</span></footer>
+    <footer class="app-footer"><img src="assets/quiz-mark.svg" alt=""> QUIZ <span class="footer-sep">·</span> ESCÁNER INTELIGENTE <span class="version">v1.1</span></footer>
+  </div>
+  <div id="scoreDialog" class="score-dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" hidden>
+    <div class="score-dialog-card">
+      <div class="dialog-logo"><img src="assets/quiz-mark.svg" alt=""></div>
+      <div class="dialog-kicker">LECTURA COMPLETADA</div>
+      <h2 id="dialogTitle">Resultado del estudiante</h2>
+      <p id="dialogStudent" class="dialog-student"></p>
+      <div class="dialog-score"><strong id="dialogScore">0.0</strong><span>/ 50</span></div>
+      <div id="dialogCorrect" class="dialog-correct">0 de 20 respuestas correctas</div>
+      <p id="dialogNote" class="dialog-note">Resultado guardado en el historial de este dispositivo.</p>
+      <button id="dialogOkBtn" class="btn btn-primary dialog-ok">OK · Siguiente estudiante</button>
+    </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>

@@ -279,10 +279,10 @@ async function downloadCustomizedSheet(format) {
     typeText.textContent = label;
     const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
     typePill.setAttribute('width', String(pillWidth)); typePill.setAttribute('x', String(271 - pillWidth / 2));
-    typeText.setAttribute('font-size', label.length > 15 ? '31' : label.length > 13 ? '34' : '38');
+    typeText.setAttribute('font-size', String(Math.max(18, Math.min(38, Math.floor(600 / Math.max(1, label.length))))));
     const subject = settings.area + ' · ' + settings.grade;
     subjectText.textContent = subject;
-    subjectText.setAttribute('font-size', String(subject.length > 40 ? 22 : subject.length > 34 ? 25 : subject.length > 29 ? 28 : 31));
+    subjectText.setAttribute('font-size', String(Math.max(17, Math.min(31, Math.floor(1300 / Math.max(1, subject.length))))));
     if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
     if (description) description.textContent = 'Tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas · ' + label + ' · ' + subject + '.';
     const serialized = new XMLSerializer().serializeToString(svg);
@@ -1041,6 +1041,8 @@ function mergeFrameReads(frameReads) {
 }
 async function captureAndGradeLive() {
   if(!liveMarkersReady||!liveStream||!ui.liveVideo.videoWidth||!liveCaptureTriggered)return;
+  if (liveFrameRequest) cancelAnimationFrame(liveFrameRequest);
+  liveFrameRequest = 0;
   setLiveStatus('Tomando cinco imágenes y comparando las respuestas…');
   try {
     const captureCanvas=document.createElement('canvas'), frameReads=[];

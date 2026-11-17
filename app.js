@@ -728,14 +728,19 @@ function liveDetectionLoop(timestamp) {
 
   // After a result is acknowledged, wait for the next student's name before detecting a new sheet.
   if (!ui.studentName.value.trim()) {
+    liveLastDetection = timestamp;
     liveStableFrames = 0;
     liveMarkersReady = false;
     liveCaptureTriggered = false;
-    ui.liveViewfinder.classList.remove('locked');
-    ui.liveLockBadge.textContent = 'LISTO PARA EL SIGUIENTE ESTUDIANTE';
-    setLiveStatus('Escribe el nombre del siguiente estudiante. La cámara ya está lista.');
+    if (!ui.liveViewfinder.classList.contains('waiting-name')) {
+      ui.liveViewfinder.classList.remove('locked');
+      ui.liveViewfinder.classList.add('waiting-name');
+      ui.liveLockBadge.textContent = 'LISTO PARA EL SIGUIENTE ESTUDIANTE';
+      setLiveStatus('Escribe el nombre del siguiente estudiante. La cámara ya está lista.');
+    }
     return;
   }
+  ui.liveViewfinder.classList.remove('waiting-name');
 
   liveBusy = true;
   liveLastDetection = timestamp;
@@ -751,7 +756,7 @@ function liveDetectionLoop(timestamp) {
       ui.liveLockBadge.textContent = '4 / 4 MARCADORES RECONOCIDOS';
       setLiveStatus('¡Tarjeta reconocida! Capturando automáticamente…', 'ready');
       // Small pause lets the visual lock become visible before taking the still frame.
-      setTimeout(() => captureAndGradeLive(), 180);
+      setTimeout(() => captureAndGradeLive(), 260);
     } else if (!liveCaptureTriggered) {
       ui.liveViewfinder.classList.remove('locked');
       ui.liveLockBadge.textContent = 'Detectando…';

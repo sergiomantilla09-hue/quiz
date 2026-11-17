@@ -689,12 +689,12 @@ function updateScoreDisplay() {
   const correct = keyReady ? answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length : 0;
   const pending = answers.filter(isPendingAnswer).length;
   const grade = correct * POINTS_PER_CORRECT;
-  ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
-  ui.scoreDescriptor.textContent = keyReady ? (pending ? `${correct} correctas · nota provisional` : `${correct} de ${QUESTION_COUNT} respuestas correctas`) : 'Configura la clave para obtener la nota';
-  ui.correctCount.textContent = `${correct} correctas`;
-  ui.invalidCount.textContent = `${pending} por revisar`;
-  ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
   const captureReview = Boolean(currentRead.requiresReview);
+  ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
+  ui.scoreDescriptor.textContent = keyReady ? (pending || captureReview ? `${correct} correctas · nota provisional` : `${correct} de ${QUESTION_COUNT} respuestas correctas`) : 'Configura la clave para obtener la nota';
+  ui.correctCount.textContent = `${correct} correctas`;
+  ui.invalidCount.textContent = captureReview ? 'Verificar captura' : `${pending} por revisar`;
+  ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
   const needsReview = pending > 0 || !keyReady || captureReview;
   ui.reviewBadge.textContent = !keyReady ? 'Falta la clave' : captureReview ? 'Verificar captura' : needsReview ? 'Requiere revisión' : 'Lectura completa';
   ui.reviewBadge.className = `review-badge${needsReview ? ' warn' : ''}`;

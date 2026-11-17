@@ -1,10 +1,12 @@
-# Quiz · Lector de evaluaciones del Colegio Balbino García
+# Quiz · Lector de evaluaciones · QUIZ
 
 Aplicación web progresiva (PWA) para leer la tarjeta **BG-LC10-R20-MOBILE-V1** del Colegio Balbino García.
 
 ## Funciones
 
-- Captura una fotografía desde la cámara trasera del celular o permite elegir una imagen.
+- Abre una cámara guiada dentro de la app o permite elegir una fotografía.
+- Detecta los cuatro marcadores en tiempo real y captura automáticamente al reconocerlos de forma estable.
+- Muestra una ventana emergente con la nota y prepara la cámara para el siguiente estudiante al pulsar OK.
 - Detecta los cuatro marcadores cuadrados y corrige la perspectiva.
 - Lee las 20 filas de respuestas A–D.
 - Señala preguntas sin marca, con doble marca o con marca tenue.
@@ -27,9 +29,9 @@ Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este re
 1. Abre Quiz desde el celular.
 2. En **Clave**, registra el nombre de la evaluación y sus 20 respuestas correctas.
 3. En **Calificar**, escribe el nombre y curso del estudiante.
-4. Toma una fotografía completa, vertical y bien iluminada de la tarjeta.
-5. Revisa las respuestas detectadas, especialmente las señaladas como dudosas o dobles.
-6. Guarda el resultado. En **Historial** puedes exportar los registros a CSV.
+4. En el escaneo guiado, alinea los cuatro marcadores. Quiz toma la fotografía automáticamente cuando los reconoce.
+5. La nota aparece en una ventana emergente y se guarda automáticamente en el historial. Pulsa **OK · Siguiente estudiante**, escribe el nombre siguiente y presenta la nueva tarjeta.
+6. Para fotografías cargadas desde la galería, revisa las respuestas detectadas y guarda el resultado manualmente. En **Historial** puedes exportar los registros a CSV.
 
 ## Tarjeta compatible
 

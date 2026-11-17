@@ -129,6 +129,12 @@
               <div class="score-meta"><span id="correctCount">0 correctas</span><i></i><span id="invalidCount">0 por revisar</span></div>
             </div>
           </div>
+          <div class="answer-photo-card">
+            <div class="answer-photo-heading"><div><h3>Lectura sobre la tarjeta</h3><p>La imagen muestra dónde se detectaron aciertos, errores y marcas que requieren revisión.</p></div>
+              <div class="answer-photo-legend"><span><i class="legend-correct"></i>Acierto</span><span><i class="legend-wrong"></i>Error</span><span><i class="legend-review"></i>Revisar</span></div>
+            </div>
+            <div class="answer-photo-viewport"><canvas id="answerPhotoCanvas" aria-label="Fotografía de la tarjeta con aciertos y errores resaltados"></canvas></div>
+          </div>
           <div class="answer-review-head">
             <div><h3>Respuestas detectadas</h3><p>Corrige aquí cualquier lectura dudosa.</p></div>
             <button id="regradeBtn" class="small-action">Actualizar nota</button>
@@ -191,14 +197,19 @@
               <input id="sheetName" type="text" maxlength="36" value="Recuperación" placeholder="Ej. Recuperación tercer periodo">
             </label>
           </div>
-          <div class="sheet-preview">
-            <div class="sheet-preview-kicker">VISTA PREVIA DEL ENCABEZADO</div>
-            <div class="sheet-preview-title">Hoja de respuestas</div>
-            <div class="sheet-preview-meta">
-              <span id="sheetPreviewType">Recuperación</span>
-              <strong id="sheetPreviewSubject">Lengua Castellana · Grado 10.º</strong>
+          <div class="sheet-preview sheet-preview-full">
+            <div class="sheet-preview-kicker">VISTA PREVIA COMPLETA · IGUAL A LA DESCARGA</div>
+            <img id="sheetPreviewImage" alt="Vista previa completa de la hoja de respuestas QUIZ" loading="lazy">
+          </div>
+          <div class="sheet-presets">
+            <div class="sheet-download-heading"><strong>Configuraciones guardadas</strong><small>Recupera una evaluación con su formato y clave.</small></div>
+            <label class="field"><span>Nombre de la configuración</span><input id="sheetPresetName" type="text" maxlength="50" placeholder="Ej. Matemáticas · 10-02 · Parcial 1"></label>
+            <div class="sheet-preset-controls">
+              <button id="saveSheetPresetBtn" type="button" class="small-action">Guardar configuración actual</button>
+              <select id="sheetPresetSelect" aria-label="Configuraciones guardadas"><option value="">Selecciona una configuración guardada</option></select>
+              <button id="loadSheetPresetBtn" type="button" class="small-action">Cargar</button>
+              <button id="deleteSheetPresetBtn" type="button" class="small-action">Eliminar</button>
             </div>
-            <div class="sheet-preview-brand"><img src="assets/quiz-mark.svg" alt=""> <span>QUIZ</span><small id="sheetPreviewCount">30 PREGUNTAS</small></div>
           </div>
           <div class="sheet-download-heading"><strong>Descargar hoja personalizada</strong><small id="sheetDownloadMeta">QUIZ · 30 preguntas · PNG, JPG y SVG</small></div>
           <div class="sheet-download-options" role="group" aria-label="Formato de descarga">

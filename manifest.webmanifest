@@ -1,7 +1,7 @@
 {
-  "name": "Quiz · Lector de evaluaciones",
-  "short_name": "Quiz",
-  "description": "Lector móvil de hojas de respuestas del Colegio Balbino García.",
+  "name": "QUIZ · Escáner de evaluaciones",
+  "short_name": "QUIZ",
+  "description": "Escáner inteligente de evaluaciones.",
   "lang": "es-CO",
   "start_url": "./index.html",
   "scope": "./",

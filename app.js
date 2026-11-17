@@ -387,7 +387,7 @@ ui.saveKeyBtn.addEventListener('click', () => {
   store.assessmentName = title;
   persist();
   ui.scanAssessment.value = title;
-  if (currentRead) renderResult();
+  if (currentRead) { renderResult(); renderAnswerPhoto(); }
   showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : `Clave guardada parcialmente. Completa las ${QUESTION_COUNT} para calcular la nota.`);
 });
 
@@ -805,7 +805,7 @@ function updateScoreDisplay() {
   ui.saveResultBtn.disabled = !keyReady;
   ui.saveResultBtn.textContent = keyReady ? (captureReview ? 'Confirmar resultado' : 'Guardar resultado') : 'Configura la clave primero';
 }
-ui.regradeBtn.addEventListener('click', () => { renderResult(); showToast('Nota actualizada.'); });
+ui.regradeBtn.addEventListener('click', () => { renderResult(); renderAnswerPhoto(); showToast('Nota actualizada.'); });
 ui.studentName.addEventListener('input', () => { if (currentRead) ui.resultStudent.textContent = ui.studentName.value.trim() || 'Estudiante sin identificar'; });
 ui.scanAssessment.addEventListener('input', () => { if (currentRead) ui.resultAssessment.textContent = ui.scanAssessment.value.trim() || store.assessmentName; });
 function saveCurrentResult({ askForPending = true, silent = false } = {}) {
@@ -1183,16 +1183,13 @@ async function captureAndGradeLive() {
     ui.photoPreview.src=lastCaptureUrl; ui.imageStage.hidden=false; renderResult(); renderAnswerPhoto();
     const pending=answers.filter(isPendingAnswer).length;
     stopLiveScanner(true);
-    if(pending>0 || allBlank){
-      ui.resultPanel.hidden=false;
-      showMessage(allBlank
-        ? 'No se detectó ninguna marca en la tarjeta. Comprueba el enfoque, la iluminación y que las respuestas estén visibles; revisa la lectura antes de guardar.'
-        : 'Se compararon '+frameReads.length+' tomas. '+pending+' respuesta(s) no coincidieron con suficiente seguridad. Revísalas antes de guardar la calificación.','error');
-      ui.resultPanel.scrollIntoView({behavior:'smooth',block:'start'}); return;
-    }
-    const record=saveCurrentResult({askForPending:false,silent:true});
-    if(!record)throw new Error('No pude guardar el resultado. Intenta capturar la tarjeta nuevamente.');
-    ui.resultPanel.hidden=true; showScoreDialog(record);
+    ui.resultPanel.hidden=false;
+    showMessage(allBlank
+      ? 'No se detectó ninguna marca en la tarjeta. Comprueba el enfoque, la iluminación y las respuestas visibles; la fotografía y sus indicadores quedan disponibles para revisar.'
+      : pending>0
+        ? 'Se compararon '+frameReads.length+' tomas. '+pending+' respuesta(s) necesitan revisión; comprueba los indicadores antes de guardar.'
+        : 'Lectura completada. Revisa la fotografía: los aciertos aparecen en verde y los errores en rojo. Puedes corregir cualquier respuesta antes de guardar.','success');
+    ui.resultPanel.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(error){
     console.error('Quiz live capture:',error); liveMarkersReady=false; liveCaptureTriggered=false; liveStableFrames=0;
     setLiveStatus(error?.message||'No se pudo leer la tarjeta. Alinea de nuevo los cuatro marcadores.','error');

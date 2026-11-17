@@ -23,12 +23,12 @@ function readSvg(count) {
 }
 
 function bubbleCenters(svg) {
-  return [...svg.matchAll(/<circle cx="([^"]+)" cy="([^"]+)" r="18\\.2" class="bubble"\\/>/g)]
+  return [...svg.matchAll(/<circle cx="([^"]+)" cy="([^"]+)" r="18\.2" class="bubble"\/>/g)]
     .map(match => [Number(match[1]), Number(match[2])]);
 }
 
 function markerCenters(svg) {
-  return [...svg.matchAll(/<rect x="([^"]+)" y="([^"]+)" width="72" height="72" fill="#080d20"\\/>/g)]
+  return [...svg.matchAll(/<rect x="([^"]+)" y="([^"]+)" width="72" height="72" fill="#080d20"\/>/g)]
     .map(match => [Number(match[1]) + 36, Number(match[2]) + 36]);
 }
 
@@ -68,23 +68,23 @@ for (const count of [20, 30]) {
   assert.equal(Number((count * expectedCorrectPoints).toFixed(1)), 50);
 }
 
-assert.match(app, /const QUESTION_COUNTS = \\[20, 30\\]/);
+assert.match(app, /const QUESTION_COUNTS = \[20, 30\]/);
 assert.match(app, /function changeQuizType/);
 assert.match(app, /answerKeys/);
 assert.match(app, /function verifySelectedQuizType/);
 assert.match(app, /QUIZ_TYPE_MISMATCH/);
-assert.match(app, /verifySelectedQuizType\\(markers\\)/);
-assert.match(app, /verifySelectedQuizType\\(liveMarkers\\)/);
-assert.match(app, /const POINTS_PER_CORRECT = MAX_SCORE \/ QUESTION_COUNT|let POINTS_PER_CORRECT = MAX_SCORE \/ QUESTION_COUNT/);
+assert.match(app, /verifySelectedQuizType\(markers\)/);
+assert.match(app, /verifySelectedQuizType\(liveMarkers\)/);
+assert.match(app, /let POINTS_PER_CORRECT = MAX_SCORE \/ QUESTION_COUNT/);
 assert.match(app, /length: MAX_QUESTION_COUNT/);
 
 assert.match(index, /id="quizType20"/);
 assert.match(index, /id="quizType30"/);
 assert.match(index, /20 preguntas/);
 assert.match(index, /30 preguntas/);
-assert.match(app, /plantilla_quiz_20\\.svg/);
-assert.match(app, /plantilla_quiz_30\\.svg/);
-assert.match(serviceWorker, /plantilla_quiz_20\\.svg/);
-assert.match(serviceWorker, /plantilla_quiz_30\\.svg/);
+assert.match(app, /plantilla_quiz_20\.svg/);
+assert.match(app, /plantilla_quiz_30\.svg/);
+assert.match(serviceWorker, /plantilla_quiz_20\.svg/);
+assert.match(serviceWorker, /plantilla_quiz_30\.svg/);
 
 console.log('Validación QUIZ correcta: tarjetas 20 y 30, burbujas, marcadores, selector, claves y formatos cruzados.');

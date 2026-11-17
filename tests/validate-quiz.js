@@ -45,6 +45,9 @@ for (const count of [20, 30]) {
   assert.match(svg, new RegExp('Tarjeta vertical de ' + count + ' preguntas'));
   assert.equal([...svg.matchAll(/<rect x="(?:82|610)" y="416" width="490" height="(\d+)"/g)].length, 2);
   assert.equal(new Set([...svg.matchAll(/<rect x="(?:82|610)" y="416" width="490" height="(\d+)"/g)].map(match => match[1])).size, 1);
+  const questionNumbers = [...svg.matchAll(/<text x="[^"]+" y="[^"]+" dy="5" class="qnum">(\d+)<\/text>/g)];
+  assert.equal(questionNumbers.length, count, 'Números de pregunta no centrados para QUIZ ' + count);
+  assert.deepEqual(questionNumbers.map(match => Number(match[1])), Array.from({ length: count }, (_, i) => i + 1));
   const actualBubbles = bubbleCenters(svg);
   assert.equal(actualBubbles.length, count * 4, 'Cantidad de burbujas incorrecta para QUIZ ' + count);
 
@@ -92,4 +95,16 @@ assert.match(app, /plantilla_quiz_30\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_20\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_30\.svg/);
 
-console.log('Validación QUIZ correcta: tarjetas 20 y 30, burbujas, marcadores, selector, claves y formatos cruzados.');
+for (const id of ['sheetArea', 'sheetGrade', 'sheetEvaluationType', 'sheetCustomLabel', 'sheetPreviewSubject', 'templateLink']) {
+  assert.ok(index.includes('id="' + id + '"'), 'Falta control del editor: ' + id);
+}
+for (const id of ['sheetTypePill', 'sheetTypeLabel', 'sheetSubjectLine']) {
+  assert.ok(readSvg(20).includes('id="' + id + '"'), 'Falta campo editable en plantilla 20: ' + id);
+  assert.ok(readSvg(30).includes('id="' + id + '"'), 'Falta campo editable en plantilla 30: ' + id);
+}
+assert.match(app, /function initializeSheetEditor/);
+assert.match(app, /function downloadCustomizedSheet/);
+assert.match(app, /new XMLSerializer\(\)/);
+assert.match(app, /function getSheetEvaluationLabel/);
+
+console.log('Validación QUIZ correcta: formatos 20/30, coordenadas, selector, claves, incompatibilidad, editor de hojas y centrado de números.');

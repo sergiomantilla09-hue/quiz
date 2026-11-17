@@ -95,7 +95,7 @@ assert.match(app, /plantilla_quiz_30\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_20\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_30\.svg/);
 
-for (const id of ['sheetArea', 'sheetGrade', 'sheetEvaluationType', 'sheetCustomLabel', 'sheetPreviewSubject', 'templateLink']) {
+for (const id of ['sheetArea', 'sheetGrade', 'sheetName', 'sheetPreviewSubject', 'downloadPngBtn', 'downloadJpgBtn', 'downloadSvgBtn']) {
   assert.ok(index.includes('id="' + id + '"'), 'Falta control del editor: ' + id);
 }
 for (const id of ['sheetTypePill', 'sheetTypeLabel', 'sheetSubjectLine']) {
@@ -106,5 +106,14 @@ assert.match(app, /function initializeSheetEditor/);
 assert.match(app, /function downloadCustomizedSheet/);
 assert.match(app, /new XMLSerializer\(\)/);
 assert.match(app, /function getSheetEvaluationLabel/);
+assert.match(app, /function mergeFrameReads/);
+assert.match(app, /LIVE_CAPTURE_FRAME_COUNT = 5/);
+assert.match(app, /LIVE_CAPTURE_INTERVAL_MS = 180/);
+assert.match(app, /function measureBubble\(rgba/);
+assert.match(app, /colorDistance/);
+assert.match(app, /downloadCustomizedSheet\('png'\)/);
+assert.match(app, /downloadCustomizedSheet\('jpg'\)/);
+assert.match(app, /downloadCustomizedSheet\('svg'\)/);
+assert.doesNotMatch(app, /sheetEvaluationType|sheetCustomLabelField|sheetCustomLabel|ui\.templateLink/);
 
-console.log('Validación QUIZ correcta: formatos 20/30, coordenadas, selector, claves, incompatibilidad, editor de hojas y centrado de números.');
+console.log('Validación QUIZ correcta: formatos 20/30, geometría OMR, claves, lectura por color, consenso multiframe y editor/descargas.');

@@ -28,6 +28,43 @@
     </header>
 
     <main>
+        <div class="capture-card">
+          <div class="capture-art" aria-hidden="true">
+            <div class="scan-frame"><div class="scan-inner"><span>20</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
+          </div>
+          <div class="capture-copy">
+            <div class="capture-title">Escanear tarjeta</div>
+            <p>Alinea los cuatro marcadores. Quiz captura y califica automáticamente cuando reconoce la tarjeta.</p>
+            <div class="capture-actions">
+              <button id="liveScanBtn" class="btn btn-lime">◎ Escaneo guiado</button>
+              <button id="cameraBtn" class="btn btn-secondary">Tomar foto</button>
+              <button id="galleryBtn" class="btn btn-secondary">Elegir imagen</button>
+            </div>
+          </div>
+          <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+          <input id="galleryInput" type="file" accept="image/*" hidden>
+        </div>
+        <section id="liveScanner" class="live-scanner" hidden aria-label="Escáner guiado en vivo">
+          <div class="live-scanner-head">
+            <div><div class="section-kicker">CÁMARA EN VIVO</div><strong>Encuadra la tarjeta</strong></div>
+            <button id="closeLiveScannerBtn" class="text-btn">Cerrar cámara ✕</button>
+          </div>
+          <p class="live-instruction">Alinea los cuatro cuadrados negros de la tarjeta con las guías de las esquinas.</p>
+          <div id="liveViewfinder" class="live-viewfinder">
+            <video id="liveVideo" autoplay muted playsinline></video>
+            <div id="liveGuide" class="live-guide">
+              <span class="live-target tl"></span><span class="live-target tr"></span>
+              <span class="live-target bl"></span><span class="live-target br"></span>
+              <div class="live-guide-center"><img src="assets/quiz-mark.svg" alt=""><span>QUIZ</span><small>ESCÁNER INTELIGENTE</small></div>
+            </div>
+            <div id="liveLockBadge" class="live-lock-badge">Buscando los 4 marcadores</div>
+          </div>
+          <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
+          <p class="live-footnote">La captura y la calificación se realizan automáticamente al reconocer los cuatro marcadores.</p>
+        </section>
+        <a class="template-link" href="assets/plantilla_balbinista.svg" download="Tarjeta_Respuestas_Balbino_BG-LC10-R20-MOBILE-V1.svg">↓ Descargar la tarjeta compatible con esta app</a>
+
+
       <section class="intro">
         <div class="eyebrow"><span class="eyebrow-dot"></span> LECTOR DE RESPUESTAS</div>
         <h1>Califica con una <em>fotografía.</em></h1>
@@ -67,43 +104,6 @@
             <input id="studentId" type="text" maxlength="25" placeholder="Documento / código">
           </label>
         </div>
-
-        <div class="capture-card">
-          <div class="capture-art" aria-hidden="true">
-            <div class="scan-frame"><div class="scan-inner"><span>20</span><small>RESPUESTAS</small></div><b class="corner tl"></b><b class="corner tr"></b><b class="corner bl"></b><b class="corner br"></b></div>
-          </div>
-          <div class="capture-copy">
-            <div class="capture-title">Fotografía de la tarjeta</div>
-            <p>Alinea los cuatro marcadores. Quiz captura y califica automáticamente cuando reconoce la tarjeta.</p>
-            <div class="capture-actions">
-              <button id="liveScanBtn" class="btn btn-lime">◎ Escaneo guiado</button>
-              <button id="cameraBtn" class="btn btn-secondary">Tomar foto</button>
-              <button id="galleryBtn" class="btn btn-secondary">Elegir imagen</button>
-            </div>
-          </div>
-          <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
-          <input id="galleryInput" type="file" accept="image/*" hidden>
-        </div>
-        <a class="template-link" href="assets/plantilla_balbinista.svg" download="Tarjeta_Respuestas_Balbino_BG-LC10-R20-MOBILE-V1.svg">↓ Descargar la tarjeta compatible con esta app</a>
-
-        <section id="liveScanner" class="live-scanner" hidden aria-label="Escáner guiado en vivo">
-          <div class="live-scanner-head">
-            <div><div class="section-kicker">CÁMARA EN VIVO</div><strong>Encuadra la tarjeta</strong></div>
-            <button id="closeLiveScannerBtn" class="text-btn">Cerrar cámara ✕</button>
-          </div>
-          <p class="live-instruction">Alinea los cuatro cuadrados negros de la tarjeta con las guías de las esquinas.</p>
-          <div id="liveViewfinder" class="live-viewfinder">
-            <video id="liveVideo" autoplay muted playsinline></video>
-            <div id="liveGuide" class="live-guide">
-              <span class="live-target tl"></span><span class="live-target tr"></span>
-              <span class="live-target bl"></span><span class="live-target br"></span>
-              <div class="live-guide-center"><img src="assets/quiz-mark.svg" alt=""><span>QUIZ</span><small>ESCÁNER INTELIGENTE</small></div>
-            </div>
-            <div id="liveLockBadge" class="live-lock-badge">Buscando los 4 marcadores</div>
-          </div>
-          <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
-          <p class="live-footnote">La captura y la calificación se realizan automáticamente al reconocer los cuatro marcadores.</p>
-        </section>
 
         <div id="imageStage" class="image-stage" hidden>
           <div class="stage-header"><span class="stage-dot"></span><span id="imageFileName">Imagen lista</span><button id="removeImage" class="text-btn">Cambiar</button></div>

@@ -283,7 +283,7 @@ function initializeSheetEditor() {
   ui.sheetCustomLabel.addEventListener('input', saveSheetEditorSettings);
 }
 function slugifySheetPart(value) {
-  return String(value).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
 }
 async function downloadCustomizedSheet(event) {

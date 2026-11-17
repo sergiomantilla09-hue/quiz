@@ -1,17 +1,23 @@
 'use strict';
 
 const STORAGE_KEY = 'balbinoScan.data.v1';
+const QUESTION_COUNT = 30;
+const ROWS_PER_COLUMN = 15;
+const MAX_SCORE = 50;
+const POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
 const TEMPLATE = {
+  questionCount: QUESTION_COUNT,
+  rowsPerColumn: ROWS_PER_COLUMN,
   width: 1199,
-  height: 1312,
+  height: 1700,
   markerCenters: {
     tl: { x: 86, y: 67 },
     tr: { x: 1114, y: 65 },
-    br: { x: 1114, y: 1237 },
-    bl: { x: 86, y: 1237 }
+    br: { x: 1114, y: 1603 },
+    bl: { x: 86, y: 1603 }
   },
   bubbleXs: [256.8, 344.5, 432.2, 520.2, 785.4, 873.6, 961.8, 1050.9],
-  bubbleYs: [516.8, 575.3, 633.2, 691.6, 750.4, 809.1, 867.7, 926.0, 984.7, 1043.6],
+  bubbleYs: [516.8, 575.3, 633.2, 691.6, 750.4, 809.1, 867.7, 926.0, 984.7, 1043.6, 1102.1, 1160.6, 1219.1, 1277.6, 1336.1],
   options: ['A', 'B', 'C', 'D']
 };
 const DEFAULT_ASSESSMENT = 'Recuperación Lengua Castellana · Grado 10.º';
@@ -42,11 +48,13 @@ function loadStore() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     return {
       assessmentName: typeof parsed.assessmentName === 'string' ? parsed.assessmentName : DEFAULT_ASSESSMENT,
-      answerKey: Array.isArray(parsed.answerKey) && parsed.answerKey.length === 20 ? parsed.answerKey.map(v => TEMPLATE.options.includes(v) ? v : '') : Array(20).fill(''),
+      answerKey: Array.isArray(parsed.answerKey)
+        ? [...parsed.answerKey.slice(0, QUESTION_COUNT), ...Array(Math.max(0, QUESTION_COUNT - parsed.answerKey.length)).fill('')].map(v => TEMPLATE.options.includes(v) ? v : '')
+        : Array(QUESTION_COUNT).fill(''),
       results: Array.isArray(parsed.results) ? parsed.results : []
     };
   } catch {
-    return { assessmentName: DEFAULT_ASSESSMENT, answerKey: Array(20).fill(''), results: [] };
+    return { assessmentName: DEFAULT_ASSESSMENT, answerKey: Array(QUESTION_COUNT).fill(''), results: [] };
   }
 }
 function persist() {
@@ -108,14 +116,14 @@ function renderKeyEditor() {
       options.appendChild(label);
     });
     row.append(number, options);
-    (index < 10 ? ui.keyLeft : ui.keyRight).appendChild(row);
+    (index < ROWS_PER_COLUMN ? ui.keyLeft : ui.keyRight).appendChild(row);
   });
   updateKeyProgress();
 }
 function updateKeyProgress() {
   const completed = store.answerKey.filter(Boolean).length;
-  ui.keyProgress.textContent = `${completed} de 20 definidas`;
-  ui.keyProgress.style.color = completed === 20 ? 'var(--green)' : 'var(--muted)';
+  ui.keyProgress.textContent = `${completed} de ${QUESTION_COUNT} definidas`;
+  ui.keyProgress.style.color = completed === QUESTION_COUNT ? 'var(--green)' : 'var(--muted)';
 }
 ui.saveKeyBtn.addEventListener('click', () => {
   const title = ui.keyAssessment.value.trim() || DEFAULT_ASSESSMENT;
@@ -123,7 +131,7 @@ ui.saveKeyBtn.addEventListener('click', () => {
   persist();
   ui.scanAssessment.value = title;
   if (currentRead) renderResult();
-  showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : 'Clave guardada parcialmente. Completa las 20 para calcular la nota.');
+  showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : 'Clave guardada parcialmente. Completa las ${QUESTION_COUNT} para calcular la nota.');
 });
 
 function resetScan() {
@@ -197,7 +205,7 @@ async function processCurrentImage() {
     showMessage(error && error.message ? error.message : 'No se pudo leer la tarjeta. Intenta con una foto más nítida y vertical.', 'error');
   } finally {
     ui.processBtn.disabled = false;
-    ui.processBtn.innerHTML = 'Leer las 20 respuestas <span>→</span>';
+    ui.processBtn.innerHTML = `Leer las ${QUESTION_COUNT} respuestas <span>→</span>`;
   }
 }
 
@@ -364,9 +372,9 @@ function readAnswerBubbles(rgba, width, height) {
   const gray = new Uint8Array(width * height);
   for (let i = 0, p = 0; i < gray.length; i++, p += 4) gray[i] = Math.round(.299 * rgba[p] + .587 * rgba[p + 1] + .114 * rgba[p + 2]);
   const results = [];
-  for (let q = 0; q < 20; q++) {
-    const row = q < 10 ? q : q - 10;
-    const xStart = q < 10 ? 0 : 4;
+  for (let q = 0; q < QUESTION_COUNT; q++) {
+    const row = q % ROWS_PER_COLUMN;
+    const xStart = q < ROWS_PER_COLUMN ? 0 : 4;
     const y = TEMPLATE.bubbleYs[row];
     const metrics = [];
     for (let opt = 0; opt < 4; opt++) {
@@ -476,9 +484,9 @@ function updateScoreDisplay() {
   const answers = currentRead.answers;
   const correct = keyReady ? answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length : 0;
   const pending = answers.filter((item, index) => !item.answer || item.status === 'multiple' || item.status === 'uncertain' || item.status === 'low').length;
-  const grade = correct * 2.5;
+  const grade = correct * POINTS_PER_CORRECT;
   ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
-  ui.scoreDescriptor.textContent = keyReady ? `${correct} de 20 respuestas correctas` : 'Configura la clave para obtener la nota';
+  ui.scoreDescriptor.textContent = keyReady ? `${correct} de ${QUESTION_COUNT} respuestas correctas` : 'Configura la clave para obtener la nota';
   ui.correctCount.textContent = `${correct} correctas`;
   ui.invalidCount.textContent = `${pending} por revisar`;
   ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
@@ -505,7 +513,8 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
     assessment: ui.scanAssessment.value.trim() || store.assessmentName,
     date: new Date().toISOString(),
     correct,
-    score: Number((correct * 2.5).toFixed(1)),
+    score: Number((correct * POINTS_PER_CORRECT).toFixed(1)),
+    questionCount: QUESTION_COUNT,
     answers: currentRead.answers.map(item => item.answer || ''),
     key: [...store.answerKey],
     source: currentRead.sourceName,
@@ -552,8 +561,8 @@ ui.exportCsvBtn.addEventListener('click', () => {
   exportCsv(store.results, 'resultados_balbino_scan.csv');
 });
 function exportCsv(records, filename) {
-  const headers = ['Estudiante', 'Curso', 'Identificación', 'Evaluación', 'Fecha', 'Correctas', 'Nota sobre 50', ...Array.from({ length: 20 }, (_, i) => `P${i + 1}`)];
-  const rows = records.map(record => [record.student, record.course, record.studentId, record.assessment, formatDate(record.date), record.correct, Number(record.score).toFixed(1), ...(record.answers || [])]);
+  const headers = ['Estudiante', 'Curso', 'Identificación', 'Evaluación', 'Fecha', 'Correctas', 'Nota sobre 50', ...Array.from({ length: QUESTION_COUNT }, (_, i) => `P${i + 1}`)];
+  const rows = records.map(record => [record.student, record.course, record.studentId, record.assessment, formatDate(record.date), record.correct, Number(record.score).toFixed(1), ...Array.from({ length: QUESTION_COUNT }, (_, i) => (record.answers || [])[i] || '')]);
   const csv = '\ufeff' + [headers, ...rows].map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -643,7 +652,7 @@ async function openLiveScanner() {
     return;
   }
   if (!store.answerKey.every(Boolean)) {
-    showMessage('Antes de escanear, configura las 20 respuestas correctas en la sección Clave.', 'error');
+    showMessage('Antes de escanear, configura las ${QUESTION_COUNT} respuestas correctas en la sección Clave.', 'error');
     switchTab('key');
     return;
   }
@@ -755,7 +764,7 @@ function liveDetectionLoop(timestamp) {
 function showScoreDialog(record) {
   ui.dialogStudent.textContent = record.student + (record.course ? ' · ' + record.course : '');
   ui.dialogScore.textContent = Number(record.score).toFixed(1);
-  ui.dialogCorrect.textContent = record.correct + ' de 20 respuestas correctas';
+  ui.dialogCorrect.textContent = record.correct + ' de ' + QUESTION_COUNT + ' respuestas correctas';
   ui.dialogNote.textContent = record.needsReview
     ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
     : 'Resultado guardado automáticamente en el historial.';
@@ -765,7 +774,7 @@ function showScoreDialog(record) {
 
 async function captureAndGradeLive() {
   if (!liveMarkersReady || !liveStream || !ui.liveVideo.videoWidth || !liveCaptureTriggered) return;
-  setLiveStatus('Capturando y leyendo las 20 respuestas…');
+  setLiveStatus(`Capturando y leyendo las ${QUESTION_COUNT} respuestas…`);
   try {
     const captureCanvas = document.createElement('canvas');
     captureCanvas.width = TEMPLATE.width;
@@ -788,7 +797,7 @@ async function captureAndGradeLive() {
     ui.imageStage.hidden = false;
     renderResult();
     const record = saveCurrentResult({ askForPending: false, silent: true });
-    if (!record) throw new Error('No pude guardar el resultado. Comprueba que el nombre del estudiante esté escrito.');
+    if (!record) throw new Error('No pude guardar el resultado. Intenta capturar la tarjeta nuevamente.');
     stopLiveScanner(true);
     ui.resultPanel.hidden = true;
     showScoreDialog(record);

@@ -297,7 +297,7 @@ function initializeSheetPresets() {
     const name = ui.sheetPresetName.value.trim();
     if (!name) { showToast('Escribe un nombre para guardar la configuración.'); ui.sheetPresetName.focus(); return; }
     const snapshot = { name: name.slice(0, 50), questionCount: QUESTION_COUNT, assessmentName: store.assessmentName,
-      answerKeys: { 20: normalizeKey(store.answerKeys[20],20), 30: normalizeKey(store.answerKeys[30],30) },
+      answerKeys: { 20: normalizeKey(QUESTION_COUNT === 20 ? store.answerKey : store.answerKeys[20],20), 30: normalizeKey(QUESTION_COUNT === 30 ? store.answerKey : store.answerKeys[30],30) },
       sheetSettings: readSheetSettingsFromEditor() };
     const existing = store.sheetPresets.findIndex(item => item.name.toLowerCase() === snapshot.name.toLowerCase());
     if (existing >= 0) {
@@ -903,7 +903,6 @@ initializeSheetEditor();
 updateQuizTypePresentation();
 renderKeyEditor();
 renderHistory();
-initializeSheetPresets();
 
 // Installable PWA support.
 window.addEventListener('beforeinstallprompt', event => {
@@ -1181,7 +1180,7 @@ async function captureAndGradeLive() {
     currentFile=null;
     currentRead={answers,sourceName:'Cámara en vivo · '+frameReads.length+' tomas',detectedAt:new Date().toISOString(),manuallyChanged:false,captureFrames:frameReads.length,requiresReview:allBlank};
     ui.imageFileName.textContent='Lectura verificada con '+frameReads.length+' tomas';
-    ui.photoPreview.src=lastCaptureUrl; ui.imageStage.hidden=false; renderResult();
+    ui.photoPreview.src=lastCaptureUrl; ui.imageStage.hidden=false; renderResult(); renderAnswerPhoto();
     const pending=answers.filter(isPendingAnswer).length;
     stopLiveScanner(true);
     if(pending>0 || allBlank){

@@ -587,7 +587,11 @@ function readAnswerBubbles(rgba, width, height) {
     const marked = metrics.map((m, i) => m.isMarked ? TEMPLATE.options[i] : null).filter(Boolean);
     const uncertain = metrics.some(m => m.score >= .12 && !m.isMarked);
     let status = 'blank', answer = null;
-    if (marked.length === 1) { answer = marked[0]; status = metrics[TEMPLATE.options.indexOf(answer)].confidence < .68 ? 'low' : 'ok'; }
+    if (marked.length === 1) {
+      const candidate = marked[0];
+      if (metrics[TEMPLATE.options.indexOf(candidate)].confidence < .68) status = 'low';
+      else { answer = candidate; status = 'ok'; }
+    }
     else if (marked.length > 1) status = 'multiple';
     else if (uncertain) status = 'uncertain';
     results.push({ question: q + 1, answer, marked, metrics, status, manuallyChanged: false });
@@ -669,7 +673,11 @@ function statusFor(item, index) {
   const key = store.answerKey[index];
   if (!key) return { text: 'Sin clave', className: 'warn' };
   if (item.status === 'multiple') return { text: 'Doble marca', className: 'warn' };
-  if (item.status === 'uncertain' || item.status === 'low') return { text: item.frameAgreement ? 'Revisar ' + item.frameAgreement : 'Revisar', className: 'warn' };
+  if (item.status === 'uncertain' || item.status === 'low') {
+    const candidate = item.marked && item.marked.length === 1 ? ' · posible ' + item.marked[0] : '';
+    const agreement = item.frameAgreement ? ' ' + item.frameAgreement : '';
+    return { text: 'Revisar' + candidate + agreement, className: 'warn' };
+  }
   if (item.confirmedBlank) return { text: 'Sin marca (' + item.frameAgreement + ')', className: 'bad' };
   if (!item.answer) return { text: 'Sin respuesta', className: 'bad' };
   if (item.manuallyChanged) return { text: item.answer === key ? 'Ajustada ✓' : 'Ajustada', className: item.answer === key ? 'ok' : 'bad' };

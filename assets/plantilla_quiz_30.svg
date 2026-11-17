@@ -48,7 +48,7 @@
 <rect x="66" y="326" width="1067" height="70" rx="35" fill="#fff" stroke="#b9a9df" stroke-width="2.8"/>
 <text x="94" y="370" class="title" font-size="25">Nombre:</text>
 <line x1="214" y1="373" x2="786" y2="373" stroke="#111d4a" stroke-width="2.6"/>
-<text x="827" y="370" class="title" font-size="25">Curso:</text>
+<text x="827" y="370" class="title" font-size="25">Fecha:</text>
 <line x1="912" y1="373" x2="1092" y2="373" stroke="#111d4a" stroke-width="2.6"/>
 
 <rect x="82" y="416" width="490" height="964" rx="25" fill="#fff" stroke="#aa97d7" stroke-width="2.6"/>

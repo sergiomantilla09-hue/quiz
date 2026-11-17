@@ -17,7 +17,7 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:980p
 
 
 /* Live guided camera scanner — AR-style alignment overlay */
-.live-scanner{margin-top:16px;padding:15px;border-radius:18px;border:1px solid #dcd5ee;background:linear-gradient(145deg,#f8f6fc,#fbfdee);box-shadow:0 12px 32px rgba(17,29,74,.08)}
+.live-scanner{scroll-margin-top:8px;margin-top:12px;padding:15px;border-radius:18px;border:1px solid #dcd5ee;background:linear-gradient(145deg,#f8f6fc,#fbfdee);box-shadow:0 12px 32px rgba(17,29,74,.08)}
 .live-scanner[hidden]{display:none}
 .live-scanner-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .live-scanner-head strong{display:block;color:var(--navy);font-size:17px;margin-top:4px;letter-spacing:-.03em}
@@ -93,4 +93,17 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:980p
   .score-dialog{padding:16px}
   .score-dialog-card{padding:24px 20px 19px;border-radius:24px}
   .dialog-score strong{font-size:62px}
+}
+
+/* First-screen scanning layout */
+main>.capture-card{margin-top:12px;margin-bottom:0}
+main>.live-scanner{margin-top:12px}
+main>.template-link{margin-top:8px;margin-bottom:4px}
+@media(max-width:620px){
+  main>.capture-card{grid-template-columns:72px 1fr;gap:10px;padding:10px}
+  main>.capture-card .capture-art{height:96px}
+  main>.capture-card .capture-copy p{font-size:10px;margin:4px 0 9px}
+  main>.capture-card .capture-actions{gap:6px}
+  main>.capture-card .capture-actions .btn{min-height:35px;padding:0 9px}
+  main>.live-scanner{scroll-margin-top:5px}
 }

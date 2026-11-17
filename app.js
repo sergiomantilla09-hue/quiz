@@ -1,25 +1,46 @@
 'use strict';
 
 const STORAGE_KEY = 'balbinoScan.data.v1';
-const QUESTION_COUNT = 30;
-const ROWS_PER_COLUMN = 15;
+const QUESTION_COUNTS = [20, 30];
+const MAX_QUESTION_COUNT = 30;
 const MAX_SCORE = 50;
-const POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
-const TEMPLATE = {
-  questionCount: QUESTION_COUNT,
-  rowsPerColumn: ROWS_PER_COLUMN,
-  width: 1199,
-  height: 1700,
-  markerCenters: {
-    tl: { x: 86, y: 67 },
-    tr: { x: 1114, y: 65 },
-    br: { x: 1114, y: 1603 },
-    bl: { x: 86, y: 1603 }
+const TEMPLATE_OPTIONS = ['A', 'B', 'C', 'D'];
+const TEMPLATES = {
+  20: {
+    questionCount: 20,
+    rowsPerColumn: 10,
+    width: 1199,
+    height: 1312,
+    markerCenters: {
+      tl: { x: 86, y: 67 },
+      tr: { x: 1114, y: 65 },
+      br: { x: 1114, y: 1237 },
+      bl: { x: 86, y: 1237 }
+    },
+    bubbleXs: [256.8, 344.5, 432.2, 520.2, 785.4, 873.6, 961.8, 1050.9],
+    bubbleYs: [516.8, 575.3, 633.2, 691.6, 750.4, 809.1, 867.7, 926.0, 984.7, 1043.6],
+    options: TEMPLATE_OPTIONS
   },
-  bubbleXs: [256.8, 344.5, 432.2, 520.2, 785.4, 873.6, 961.8, 1050.9],
-  bubbleYs: [516.8, 575.3, 633.2, 691.6, 750.4, 809.1, 867.7, 926.0, 984.7, 1043.6, 1102.1, 1160.6, 1219.1, 1277.6, 1336.1],
-  options: ['A', 'B', 'C', 'D']
+  30: {
+    questionCount: 30,
+    rowsPerColumn: 15,
+    width: 1199,
+    height: 1700,
+    markerCenters: {
+      tl: { x: 86, y: 67 },
+      tr: { x: 1114, y: 65 },
+      br: { x: 1114, y: 1603 },
+      bl: { x: 86, y: 1603 }
+    },
+    bubbleXs: [256.8, 344.5, 432.2, 520.2, 785.4, 873.6, 961.8, 1050.9],
+    bubbleYs: [516.8, 575.3, 633.2, 691.6, 750.4, 809.1, 867.7, 926.0, 984.7, 1043.6, 1102.1, 1160.6, 1219.1, 1277.6, 1336.1],
+    options: TEMPLATE_OPTIONS
+  }
 };
+let QUESTION_COUNT = 30;
+let ROWS_PER_COLUMN = 15;
+let POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
+let TEMPLATE = TEMPLATES[30];
 const DEFAULT_ASSESSMENT = 'Recuperación Lengua Castellana · Grado 10.º';
 
 const $ = (id) => document.getElementById(id);
@@ -28,6 +49,9 @@ const ui = {
   panels: { scan: $('scanPanel'), key: $('keyPanel'), history: $('historyPanel') },
   installBtn: $('installBtn'),
   scanAssessment: $('scanAssessment'), studentName: $('studentName'), studentCourse: $('studentCourse'), studentId: $('studentId'),
+  quizType20: $('quizType20'), quizType30: $('quizType30'), keyQuestionCount: $('keyQuestionCount'),
+  keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), templateLink: $('templateLink'), scanCardCount: $('scanCardCount'),
+  processBtn: $('processBtn'),
   cameraBtn: $('cameraBtn'), galleryBtn: $('galleryBtn'), cameraInput: $('cameraInput'), galleryInput: $('galleryInput'),
   imageStage: $('imageStage'), imageFileName: $('imageFileName'), photoPreview: $('photoPreview'), processBtn: $('processBtn'), removeImage: $('removeImage'),
   scanMessage: $('scanMessage'), resultPanel: $('resultPanel'), resultStudent: $('resultStudent'), resultAssessment: $('resultAssessment'), reviewBadge: $('reviewBadge'),
@@ -43,23 +67,47 @@ let currentWarpedPreview = null;
 let installPrompt = null;
 let toastTimer = null;
 
+function normalizeKey(values, count) {
+  const source = Array.isArray(values) ? values : [];
+  return [...source.slice(0, count), ...Array(Math.max(0, count - source.length)).fill('')]
+    .map(value => TEMPLATE_OPTIONS.includes(value) ? value : '');
+}
 function loadStore() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const legacy = Array.isArray(parsed.answerKey) ? parsed.answerKey : [];
+    const saved = parsed.answerKeys && typeof parsed.answerKeys === 'object' ? parsed.answerKeys : {};
+    const answerKeys = {
+      20: normalizeKey(saved[20] || (legacy.length >= 20 ? legacy.slice(0, 20) : []), 20),
+      30: normalizeKey(saved[30] || (legacy.length > 20 ? legacy : (legacy.length === 20 ? legacy.concat(Array(10).fill('')) : [])), 30)
+    };
+    const questionCount = QUESTION_COUNTS.includes(parsed.questionCount) ? parsed.questionCount : 30;
     return {
       assessmentName: typeof parsed.assessmentName === 'string' ? parsed.assessmentName : DEFAULT_ASSESSMENT,
-      answerKey: Array.isArray(parsed.answerKey)
-        ? [...parsed.answerKey.slice(0, QUESTION_COUNT), ...Array(Math.max(0, QUESTION_COUNT - parsed.answerKey.length)).fill('')].map(v => TEMPLATE.options.includes(v) ? v : '')
-        : Array(QUESTION_COUNT).fill(''),
+      questionCount,
+      answerKeys,
+      answerKey: answerKeys[questionCount].slice(),
       results: Array.isArray(parsed.results) ? parsed.results : []
     };
   } catch {
-    return { assessmentName: DEFAULT_ASSESSMENT, answerKey: Array(QUESTION_COUNT).fill(''), results: [] };
+    return {
+      assessmentName: DEFAULT_ASSESSMENT,
+      questionCount: 30,
+      answerKeys: { 20: Array(20).fill(''), 30: Array(30).fill('') },
+      answerKey: Array(30).fill(''),
+      results: []
+    };
   }
 }
 function persist() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); }
-  catch { showToast('No fue posible guardar en este dispositivo.'); }
+  try {
+    store.answerKeys = store.answerKeys || {};
+    store.answerKeys[QUESTION_COUNT] = store.answerKey.slice();
+    store.questionCount = QUESTION_COUNT;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    showToast('No fue posible guardar en este dispositivo.');
+  }
 }
 function showToast(message) {
   ui.toast.textContent = message;
@@ -125,6 +173,47 @@ function updateKeyProgress() {
   ui.keyProgress.textContent = `${completed} de ${QUESTION_COUNT} definidas`;
   ui.keyProgress.style.color = completed === QUESTION_COUNT ? 'var(--green)' : 'var(--muted)';
 }
+
+function updateQuizTypePresentation() {
+  if (ui.quizType20) ui.quizType20.checked = QUESTION_COUNT === 20;
+  if (ui.quizType30) ui.quizType30.checked = QUESTION_COUNT === 30;
+  if (ui.keyQuestionCount) ui.keyQuestionCount.textContent = QUESTION_COUNT + ' ÍTEMS';
+  if (ui.keyLeftLabel) ui.keyLeftLabel.textContent = '01—' + String(ROWS_PER_COLUMN).padStart(2, '0');
+  if (ui.keyRightLabel) ui.keyRightLabel.textContent = String(ROWS_PER_COLUMN + 1).padStart(2, '0') + '—' + QUESTION_COUNT;
+  if (ui.scanCardCount) ui.scanCardCount.textContent = String(QUESTION_COUNT);
+  if (ui.processBtn) ui.processBtn.innerHTML = 'Leer las ' + QUESTION_COUNT + ' respuestas <span>→</span>';
+  if (ui.templateLink) {
+    const file = QUESTION_COUNT === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
+    const version = QUESTION_COUNT === 20 ? 'R20' : 'R30';
+    ui.templateLink.href = 'assets/' + file;
+    ui.templateLink.download = 'Tarjeta_Respuestas_QUIZ-' + version + '-MOBILE-V1.svg';
+    ui.templateLink.textContent = '↓ Descargar tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas';
+  }
+}
+function changeQuizType(nextCount) {
+  if (!QUESTION_COUNTS.includes(nextCount) || nextCount === QUESTION_COUNT) return;
+  if (liveStream) stopLiveScanner(true);
+  if (currentRead && !confirm('Cambiar el tipo de QUIZ cerrará la lectura actual sin guardarla. ¿Deseas continuar?')) {
+    updateQuizTypePresentation();
+    return;
+  }
+  store.answerKeys = store.answerKeys || {};
+  store.answerKeys[QUESTION_COUNT] = normalizeKey(store.answerKey, QUESTION_COUNT);
+  QUESTION_COUNT = nextCount;
+  ROWS_PER_COLUMN = nextCount / 2;
+  POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
+  TEMPLATE = TEMPLATES[QUESTION_COUNT];
+  store.answerKey = normalizeKey(store.answerKeys[nextCount], nextCount);
+  store.questionCount = nextCount;
+  if (currentRead) resetScan();
+  persist();
+  updateQuizTypePresentation();
+  renderKeyEditor();
+  showToast('QUIZ configurado para ' + QUESTION_COUNT + ' preguntas.');
+}
+ui.quizType20.addEventListener('change', () => { if (ui.quizType20.checked) changeQuizType(20); });
+ui.quizType30.addEventListener('change', () => { if (ui.quizType30.checked) changeQuizType(30); });
+
 ui.saveKeyBtn.addEventListener('click', () => {
   const title = ui.keyAssessment.value.trim() || DEFAULT_ASSESSMENT;
   store.assessmentName = title;
@@ -575,8 +664,14 @@ ui.clearHistoryBtn.addEventListener('click', () => {
   store.results = []; persist(); renderHistory(); showToast('Historial eliminado.');
 });
 
-// Initialize application state and controls.
+// Initialize the selected quiz format and controls.
+QUESTION_COUNT = store.questionCount;
+ROWS_PER_COLUMN = QUESTION_COUNT / 2;
+POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
+TEMPLATE = TEMPLATES[QUESTION_COUNT];
+store.answerKey = normalizeKey(store.answerKeys[QUESTION_COUNT], QUESTION_COUNT);
 ui.scanAssessment.value = store.assessmentName;
+updateQuizTypePresentation();
 renderKeyEditor();
 renderHistory();
 

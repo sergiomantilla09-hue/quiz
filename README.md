@@ -1,6 +1,6 @@
 # Quiz · Lector de evaluaciones · QUIZ
 
-Aplicación web progresiva (PWA) de **QUIZ** para leer tarjetas de 30 preguntas con opciones A–D.
+Aplicación web progresiva (PWA) de **QUIZ** para leer tarjetas de 20 o 30 preguntas, con opciones A–D.
 
 ## Funciones
 
@@ -8,11 +8,13 @@ Aplicación web progresiva (PWA) de **QUIZ** para leer tarjetas de 30 preguntas 
 - Detecta los cuatro marcadores en tiempo real y captura automáticamente al reconocerlos de forma estable.
 - Muestra una ventana emergente con la nota y prepara la cámara para el siguiente estudiante al pulsar OK.
 - Detecta los cuatro marcadores cuadrados y corrige la perspectiva.
-- Lee las 30 filas de respuestas A–D.
+- Permite elegir en **Clave** entre QUIZ de 20 (2 columnas de 10) y QUIZ de 30 (2 columnas de 15).
+- Detecta el formato físico de la tarjeta y advierte si no coincide con el seleccionado.
+- Lee las 20 o 30 respuestas A–D según el formato activo.
 - Señala preguntas sin marca, con doble marca o con marca tenue.
 - Permite corregir manualmente las lecturas dudosas.
-- Compara las respuestas con una clave editable de 30 ítems.
-- Calcula la nota sobre 50: cada acierto equivale a 50/30 puntos (nota máxima: 50).
+- Mantiene una clave independiente para cada formato.
+- Calcula la nota sobre 50: en QUIZ 20 cada acierto vale 2,5; en QUIZ 30 aplica 50/30 puntos por acierto.
 - Guarda los resultados en el dispositivo y permite exportarlos a CSV.
 - Incluye caché para uso sin conexión después de la primera carga.
 
@@ -27,7 +29,7 @@ Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este re
 ## Uso
 
 1. Abre Quiz desde el celular.
-2. En **Clave**, registra el nombre de la evaluación y sus 30 respuestas correctas.
+2. En **Clave**, selecciona si la evaluación tiene 20 o 30 preguntas y registra la clave correspondiente.
 3. En **Calificar**, puedes dejar nombre y curso en blanco; ambos son opcionales.
 4. En el escaneo guiado, alinea los cuatro marcadores. Quiz toma la fotografía automáticamente cuando los reconoce.
 5. La nota aparece en una ventana emergente y se guarda automáticamente en el historial. Pulsa **OK · Siguiente estudiante** y presenta la nueva tarjeta. No es necesario ingresar el nombre.
@@ -35,7 +37,7 @@ Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este re
 
 ## Tarjeta compatible
 
-Utiliza la tarjeta QUIZ incluida en `assets/plantilla_quiz_30.svg` y conserva visibles los cuatro marcadores. No cambies la posición de las burbujas sin actualizar las coordenadas de lectura.
+Selecciona el formato correcto en **Clave** y utiliza su plantilla: `assets/plantilla_quiz_20.svg` para 20 preguntas o `assets/plantilla_quiz_30.svg` para 30. Conserva visibles los cuatro marcadores. Si el formato de la tarjeta no coincide, Quiz no calificará y te pedirá cambiar la selección. No cambies la posición de las burbujas sin actualizar las coordenadas de lectura.
 
 La lectura automática debe validarse con tarjetas físicas reales antes de registrar calificaciones oficiales. El historial queda en el almacenamiento local del navegador; exporta periódicamente el CSV como respaldo.
 

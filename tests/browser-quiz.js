@@ -11,6 +11,7 @@ const { chromium } = require('playwright');
   const context = await browser.newContext({ acceptDownloads: true, serviceWorkers: 'block' });
   const page = await context.newPage();
   const errors = [];
+  page.setDefaultTimeout(12000);
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
 
@@ -34,6 +35,7 @@ const { chromium } = require('playwright');
   });
 
   try {
+    process.stdout.write('Browser: abriendo QUIZ\\n');
     await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
     await page.locator('[data-tab="key"]').click();
     assert.equal(await page.locator('#sheetArea').inputValue(), 'Ciencias');
@@ -52,7 +54,8 @@ const { chromium } = require('playwright');
     assert.equal(await page.locator('#sheetPreviewSubject').textContent(), 'Matemáticas · Grado 10-02');
 
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-browser-'));
-    const png30Download = page.waitForEvent('download');
+    process.stdout.write('Browser: probando PNG 30\\n');
+    const png30Download = page.waitForEvent('download', { timeout: 15000 });
     await page.locator('#downloadPngBtn').click();
     const png30 = await png30Download;
     const png30Path = path.join(temp, png30.suggestedFilename());
@@ -62,6 +65,7 @@ const { chromium } = require('playwright');
     assert.equal(png30Bytes.readUInt32BE(16), 2398, 'PNG debe exportarse al doble de ancho');
     assert.equal(png30Bytes.readUInt32BE(20), 3400, 'QUIZ 30 debe conservar la altura completa a doble resolución');
 
+    process.stdout.write('Browser: probando JPG 30\\n');
     const jpgDownload = page.waitForEvent('download');
     await page.locator('#downloadJpgBtn').click();
     const jpg = await jpgDownload;
@@ -71,6 +75,7 @@ const { chromium } = require('playwright');
     assert.deepEqual([...jpgBytes.subarray(0, 3)], [255, 216, 255], 'JPG debe tener firma JPEG válida');
     assert.ok(jpgBytes.length > 10000, 'JPG no debe quedar vacío');
 
+    process.stdout.write('Browser: probando SVG 30\\n');
     const svgDownload = page.waitForEvent('download');
     await page.locator('#downloadSvgBtn').click();
     const svg = await svgDownload;
@@ -81,9 +86,11 @@ const { chromium } = require('playwright');
     assert.ok(svgText.includes('Recuperación tercer periodo'));
     assert.ok(svgText.includes('Matemáticas · Grado 10-02'));
 
+    process.stdout.write('Browser: cambiando a QUIZ 20\\n');
     await page.locator('label.quiz-type-choice').first().click();
     assert.equal(await page.locator('#quizType20').isChecked(), true);
     assert.equal(await page.locator('#sheetPreviewCount').textContent(), '20 PREGUNTAS');
+    process.stdout.write('Browser: probando PNG 20\\n');
     const png20Download = page.waitForEvent('download');
     await page.locator('#downloadPngBtn').click();
     const png20 = await png20Download;

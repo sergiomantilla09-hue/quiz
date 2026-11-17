@@ -493,11 +493,7 @@ ui.studentName.addEventListener('input', () => { if (currentRead) ui.resultStude
 ui.scanAssessment.addEventListener('input', () => { if (currentRead) ui.resultAssessment.textContent = ui.scanAssessment.value.trim() || store.assessmentName; });
 function saveCurrentResult({ askForPending = true, silent = false } = {}) {
   if (!currentRead || !store.answerKey.every(Boolean)) return null;
-  const student = ui.studentName.value.trim();
-  if (!student) {
-    if (!silent) { showToast('Escribe el nombre del estudiante antes de guardar.'); ui.studentName.focus(); }
-    return null;
-  }
+  const student = ui.studentName.value.trim() || 'Sin identificar';
   const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length;
   const pending = currentRead.answers.filter(item => !item.answer || ['multiple', 'uncertain', 'low'].includes(item.status)).length;
   if (pending > 0 && askForPending && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return null;
@@ -637,10 +633,10 @@ function stopLiveScanner(hide = true) {
   if (ui.liveScanBtn) ui.liveScanBtn.disabled = false;
   if (hide && ui.liveScanner) ui.liveScanner.hidden = true;
 }
-ui.liveScanBtn.addEventListener('click', () => openLiveScanner({ allowEmptyName: false }));
+ui.liveScanBtn.addEventListener('click', () => openLiveScanner());
 ui.closeLiveScannerBtn.addEventListener('click', () => stopLiveScanner(true));
 
-async function openLiveScanner({ allowEmptyName = false } = {}) {
+async function openLiveScanner() {
   clearMessage();
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     showMessage('La cámara en vivo necesita abrir Quiz desde su dirección HTTPS y permitir el acceso a la cámara.', 'error');
@@ -651,17 +647,10 @@ async function openLiveScanner({ allowEmptyName = false } = {}) {
     switchTab('key');
     return;
   }
-  if (!allowEmptyName && !ui.studentName.value.trim()) {
-    showMessage('Escribe el nombre del estudiante antes de iniciar el escaneo.', 'error');
-    ui.studentName.focus();
-    return;
-  }
   stopLiveScanner(false);
   ui.liveScanner.hidden = false;
   ui.liveScanBtn.disabled = true;
-  setLiveStatus(ui.studentName.value.trim()
-    ? 'Alinea los cuatro cuadrados negros con las guías.'
-    : 'Escribe el nombre del siguiente estudiante. La cámara se activará al completar el nombre.');
+  setLiveStatus('Alinea los cuatro cuadrados negros con las guías.');
   try {
     liveStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -726,20 +715,7 @@ function liveDetectionLoop(timestamp) {
   liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
   if (liveBusy || timestamp - liveLastDetection < 220 || ui.liveVideo.readyState < 2) return;
 
-  // After a result is acknowledged, wait for the next student's name before detecting a new sheet.
-  if (!ui.studentName.value.trim()) {
-    liveLastDetection = timestamp;
-    liveStableFrames = 0;
-    liveMarkersReady = false;
-    liveCaptureTriggered = false;
-    if (!ui.liveViewfinder.classList.contains('waiting-name')) {
-      ui.liveViewfinder.classList.remove('locked');
-      ui.liveViewfinder.classList.add('waiting-name');
-      ui.liveLockBadge.textContent = 'LISTO PARA EL SIGUIENTE ESTUDIANTE';
-      setLiveStatus('Escribe el nombre del siguiente estudiante. La cámara ya está lista.');
-    }
-    return;
-  }
+  // Student names are optional; scan continuously after each acknowledged result.
   ui.liveViewfinder.classList.remove('waiting-name');
 
   liveBusy = true;
@@ -837,9 +813,8 @@ ui.dialogOkBtn.addEventListener('click', async () => {
   ui.studentName.value = '';
   ui.studentId.value = '';
   clearMessage();
-  // Reopen the live camera immediately. It waits for the next student's name before scanning.
-  await openLiveScanner({ allowEmptyName: true });
-  ui.studentName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Reopen immediately; the next card can be scanned with or without a student name.
+  await openLiveScanner();
 });
 
 document.addEventListener('visibilitychange', () => {

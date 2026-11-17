@@ -169,6 +169,42 @@ const slashMeasurement = omrSandbox.measureBubble(slashImage.pixels, 80, 80, 40,
 assert.equal(slashMeasurement.isMarked, false, 'Una línea que cruza la burbuja no debe contarse como relleno');
 assert.ok(slashMeasurement.score >= .12, 'Una marca ambigua debe quedar señalada para revisión');
 
+function testFullSheetRead(count, selected) {
+  const config = formats[count];
+  const template = {
+    options: ['A', 'B', 'C', 'D'],
+    bubbleXs: [...config.bubbleCenters.leftColumnX, ...config.bubbleCenters.rightColumnX],
+    bubbleYs: config.bubbleCenters.rowY
+  };
+  omrSandbox.TEMPLATE = template;
+  omrSandbox.QUESTION_COUNT = count;
+  omrSandbox.ROWS_PER_COLUMN = count / 2;
+  const width = 1199, height = config.referenceSize.height;
+  const pixels = new Uint8ClampedArray(width * height * 4);
+  for (let p = 0; p < pixels.length; p += 4) {
+    pixels[p] = 255; pixels[p + 1] = 255; pixels[p + 2] = 255; pixels[p + 3] = 255;
+  }
+  for (const [question, option, color] of selected) {
+    const row = question % (count / 2);
+    const xStart = question < count / 2 ? 0 : 4;
+    const cx = Math.round(template.bubbleXs[xStart + option]);
+    const cy = Math.round(template.bubbleYs[row]);
+    for (let dy = -7; dy <= 7; dy++) for (let dx = -7; dx <= 7; dx++) {
+      if (dx * dx + dy * dy > 49) continue;
+      const p = ((cy + dy) * width + cx + dx) * 4;
+      pixels[p] = color[0]; pixels[p + 1] = color[1]; pixels[p + 2] = color[2]; pixels[p + 3] = 255;
+    }
+  }
+  const read = omrSandbox.readAnswerBubbles(pixels, width, height);
+  for (const [question, option] of selected) {
+    assert.equal(read[question].answer, template.options[option], 'Lectura incorrecta en QUIZ ' + count + ', pregunta ' + (question + 1));
+    assert.equal(read[question].status, 'ok');
+  }
+  assert.equal(read.length, count);
+}
+testFullSheetRead(20, [[0, 1, [20, 75, 220]], [19, 3, [220, 35, 35]]]);
+testFullSheetRead(30, [[0, 2, [20, 20, 20]], [29, 3, [20, 75, 220]]]);
+
 const frameReads = Array.from({ length: 5 }, (_, frameIndex) =>
   Array.from({ length: 20 }, (_, questionIndex) => {
     if (questionIndex === 0) return frameIndex < 4

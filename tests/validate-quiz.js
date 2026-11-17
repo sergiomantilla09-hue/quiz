@@ -208,6 +208,9 @@ function testFullSheetRead(count, selected) {
 }
 testFullSheetRead(20, [[0, 1, [20, 75, 220]], [19, 3, [220, 35, 35]]]);
 testFullSheetRead(30, [[0, 2, [20, 20, 20]], [29, 3, [20, 75, 220]]]);
+omrSandbox.TEMPLATE = { options: ['A', 'B', 'C', 'D'] };
+omrSandbox.QUESTION_COUNT = 20;
+omrSandbox.ROWS_PER_COLUMN = 10;
 
 const frameReads = Array.from({ length: 5 }, (_, frameIndex) =>
   Array.from({ length: 20 }, (_, questionIndex) => {

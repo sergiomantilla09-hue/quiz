@@ -208,7 +208,10 @@ function testFullSheetRead(count, selected) {
     const lowConfidence = color.every(channel => channel === 210);
     assert.equal(read[question].answer, lowConfidence ? null : template.options[option], 'Lectura incorrecta en QUIZ ' + count + ', pregunta ' + (question + 1));
     assert.equal(read[question].status, lowConfidence ? 'low' : 'ok');
-    if (lowConfidence) assert.deepEqual(read[question].marked, [template.options[option]], 'Debe mostrar la posible respuesta para confirmación');
+    if (lowConfidence) {
+      assert.equal(read[question].marked.length, 1, 'Debe conservar la única posible respuesta');
+      assert.equal(read[question].marked[0], template.options[option], 'Debe mostrar la posible respuesta para confirmación');
+    }
   }
   assert.equal(read.length, count);
 }

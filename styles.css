@@ -177,3 +177,33 @@ main>.template-link{margin-top:8px;margin-bottom:4px}
   .sheet-download-btn{min-height:52px;padding:8px 10px}
   .sheet-download-btn strong{font-size:10px}
 }
+
+
+/* Editor de tarjeta: jerarquía y descargas por formato */
+.sheet-editor-card{padding:19px;background:linear-gradient(145deg,#fbfaff 0%,#f7f8ef 100%);border-color:#dcd5ed}
+.sheet-editor-heading h3{font-size:19px}
+.sheet-editor-intro{font-size:11px;max-width:58ch}
+.sheet-editor-fields{grid-template-columns:minmax(0,1.2fr) minmax(130px,.8fr);gap:12px}
+.sheet-editor-fields .field-wide{grid-column:1/-1}
+.sheet-editor-fields .field span{font-size:10px;font-weight:850;letter-spacing:.025em}
+.sheet-editor-fields input{min-height:46px;padding:0 13px;font-size:13px;font-weight:650}
+.sheet-editor-fields input:focus{border-color:#a99bd1;box-shadow:0 0 0 3px rgba(157,139,208,.13);outline:0}
+.sheet-download-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:15px 1px 8px}
+.sheet-download-heading strong{font-size:11px;color:var(--navy);font-weight:900}
+.sheet-download-heading small{font-size:8px;color:#85899a;text-align:right}
+.sheet-download-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sheet-format-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:62px;padding:9px 6px;border:1px solid #ddd7ed;border-radius:12px;background:#fff;color:var(--navy);cursor:pointer;transition:transform .12s,border-color .12s,background .12s}
+.sheet-format-btn:hover{border-color:#a99bd1;background:#f7f4fc}
+.sheet-format-btn:active{transform:scale(.98)}
+.sheet-format-btn strong{font-size:13px;font-weight:950;letter-spacing:.06em}
+.sheet-format-btn small{font-size:8px;color:#85899a}
+.live-instruction{font-size:11px}
+.live-status{min-height:46px}
+@media(max-width:620px){
+ .sheet-editor-card{padding:13px}
+ .sheet-editor-fields{grid-template-columns:minmax(0,1fr) minmax(105px,.8fr);gap:8px}
+ .sheet-editor-fields .field-wide{grid-column:1/-1}
+ .sheet-download-heading{align-items:flex-start;flex-direction:column;gap:3px}
+ .sheet-download-heading small{text-align:left}
+ .sheet-format-btn{min-height:58px}
+}

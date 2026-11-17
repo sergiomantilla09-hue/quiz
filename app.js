@@ -81,7 +81,9 @@ function loadStore() {
       20: normalizeKey(saved[20] || (legacy.length >= 20 ? legacy.slice(0, 20) : []), 20),
       30: normalizeKey(saved[30] || (legacy.length > 20 ? legacy : (legacy.length === 20 ? legacy.concat(Array(10).fill('')) : [])), 30)
     };
-    const questionCount = QUESTION_COUNTS.includes(parsed.questionCount) ? parsed.questionCount : 30;
+    const questionCount = QUESTION_COUNTS.includes(parsed.questionCount)
+      ? parsed.questionCount
+      : (legacy.length === 20 ? 20 : 30);
     return {
       assessmentName: typeof parsed.assessmentName === 'string' ? parsed.assessmentName : DEFAULT_ASSESSMENT,
       questionCount,
@@ -181,6 +183,7 @@ function updateQuizTypePresentation() {
   if (ui.keyLeftLabel) ui.keyLeftLabel.textContent = '01—' + String(ROWS_PER_COLUMN).padStart(2, '0');
   if (ui.keyRightLabel) ui.keyRightLabel.textContent = String(ROWS_PER_COLUMN + 1).padStart(2, '0') + '—' + QUESTION_COUNT;
   if (ui.scanCardCount) ui.scanCardCount.textContent = String(QUESTION_COUNT);
+  if (ui.liveViewfinder) ui.liveViewfinder.style.aspectRatio = TEMPLATE.width + ' / ' + TEMPLATE.height;
   if (ui.processBtn) ui.processBtn.innerHTML = 'Leer las ' + QUESTION_COUNT + ' respuestas <span>→</span>';
   if (ui.templateLink) {
     const file = QUESTION_COUNT === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
@@ -722,6 +725,7 @@ ui.liveScanner = $('liveScanner');
 ui.closeLiveScannerBtn = $('closeLiveScannerBtn');
 ui.liveVideo = $('liveVideo');
 ui.liveViewfinder = $('liveViewfinder');
+ui.liveGuide = $('liveGuide');
 ui.liveLockBadge = $('liveLockBadge');
 ui.liveStatus = $('liveStatus');
 ui.scoreDialog = $('scoreDialog');
@@ -787,8 +791,7 @@ async function openLiveScanner() {
       video: {
         facingMode: { ideal: 'environment' },
         width: { ideal: 1600 },
-        height: { ideal: 1800 },
-        aspectRatio: { ideal: TEMPLATE.width / TEMPLATE.height }
+        height: { ideal: 1800 }
       }
     });
     ui.liveVideo.srcObject = liveStream;
@@ -802,7 +805,8 @@ async function openLiveScanner() {
     requestAnimationFrame(() => ui.liveScanner.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     livePreviewCanvas = document.createElement('canvas');
     livePreviewCanvas.width = 720;
-    livePreviewCanvas.height = Math.round(720 * TEMPLATE.height / TEMPLATE.width);
+    livePreviewCanvas.height = 1280;
+    requestAnimationFrame(updateLiveGuideGeometry);
     liveLastDetection = 0;
     liveStableFrames = 0;
     liveMarkersReady = false;
@@ -823,22 +827,55 @@ async function openLiveScanner() {
   }
 }
 
+function updateLiveGuideGeometry() {
+  if (!ui.liveVideo || !ui.liveVideo.videoWidth || !ui.liveGuide || ui.liveScanner.hidden) return;
+  const view = ui.liveViewfinder.getBoundingClientRect();
+  if (!view.width || !view.height) return;
+
+  const videoRatio = ui.liveVideo.videoWidth / ui.liveVideo.videoHeight;
+  const viewRatio = view.width / view.height;
+  let imageWidth, imageHeight, imageLeft, imageTop;
+  if (videoRatio > viewRatio) {
+    imageWidth = view.width;
+    imageHeight = view.width / videoRatio;
+    imageLeft = 0;
+    imageTop = (view.height - imageHeight) / 2;
+  } else {
+    imageHeight = view.height;
+    imageWidth = view.height * videoRatio;
+    imageLeft = (view.width - imageWidth) / 2;
+    imageTop = 0;
+  }
+
+  const cardRatio = TEMPLATE.width / TEMPLATE.height;
+  const cardWidth = Math.min(imageWidth * 0.88, imageHeight * cardRatio * 0.88);
+  const cardHeight = cardWidth / cardRatio;
+  const left = imageLeft + (imageWidth - cardWidth) / 2;
+  const top = imageTop + (imageHeight - cardHeight) / 2;
+
+  Object.assign(ui.liveGuide.style, {
+    left: left + 'px',
+    top: top + 'px',
+    width: cardWidth + 'px',
+    height: cardHeight + 'px',
+    right: 'auto',
+    bottom: 'auto'
+  });
+}
+window.addEventListener('resize', () => requestAnimationFrame(updateLiveGuideGeometry));
+
 function drawVideoCoverToCanvas(video, canvas) {
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  const targetW = canvas.width, targetH = canvas.height;
+  // Preserve the entire camera frame. Cropping to the selected sheet ratio would
+  // hide the top or bottom markers when the other QUIZ format is presented.
   const sourceW = video.videoWidth, sourceH = video.videoHeight;
   if (!sourceW || !sourceH) throw new Error('La cámara todavía no está lista.');
-  const targetRatio = targetW / targetH;
-  const sourceRatio = sourceW / sourceH;
-  let sx = 0, sy = 0, sw = sourceW, sh = sourceH;
-  if (sourceRatio > targetRatio) {
-    sw = sourceH * targetRatio;
-    sx = (sourceW - sw) / 2;
-  } else {
-    sh = sourceW / targetRatio;
-    sy = (sourceH - sh) / 2;
-  }
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, targetW, targetH);
+  const scale = Math.min(1, 1800 / Math.max(sourceW, sourceH));
+  const targetW = Math.max(1, Math.round(sourceW * scale));
+  const targetH = Math.max(1, Math.round(sourceH * scale));
+  if (canvas.width !== targetW) canvas.width = targetW;
+  if (canvas.height !== targetH) canvas.height = targetH;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(video, 0, 0, targetW, targetH);
   return ctx;
 }
 

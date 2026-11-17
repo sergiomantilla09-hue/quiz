@@ -276,6 +276,7 @@ async function processCurrentImage() {
   try {
     const source = await loadImageData(currentFile);
     const markers = detectMarkers(source.data, source.width, source.height);
+    verifySelectedQuizType(markers);
     const warped = warpToTemplate(source.data, source.width, source.height, markers);
     currentWarpedPreview = warped;
     const answers = readAnswerBubbles(warped.data, warped.width, warped.height);
@@ -321,10 +322,10 @@ function detectMarkers(rgba, width, height) {
   for (let i = 0, p = 0; i < gray.length; i++, p += 4) gray[i] = Math.round(.299 * rgba[p] + .587 * rgba[p + 1] + .114 * rgba[p + 2]);
 
   const regions = {
-    tl: { x0: 0, x1: Math.floor(width * .34), y0: 0, y1: Math.floor(height * .32), expected: [0.072, 0.0394] },
-    tr: { x0: Math.floor(width * .66), x1: width, y0: 0, y1: Math.floor(height * .32), expected: [0.929, 0.0394] },
-    bl: { x0: 0, x1: Math.floor(width * .34), y0: Math.floor(height * .68), y1: height, expected: [0.072, 0.943] },
-    br: { x0: Math.floor(width * .66), x1: width, y0: Math.floor(height * .68), y1: height, expected: [0.929, 0.943] }
+    tl: { x0: 0, x1: Math.floor(width * .34), y0: 0, y1: Math.floor(height * .32), expected: [TEMPLATE.markerCenters.tl.x / TEMPLATE.width, TEMPLATE.markerCenters.tl.y / TEMPLATE.height] },
+    tr: { x0: Math.floor(width * .66), x1: width, y0: 0, y1: Math.floor(height * .32), expected: [TEMPLATE.markerCenters.tr.x / TEMPLATE.width, TEMPLATE.markerCenters.tr.y / TEMPLATE.height] },
+    bl: { x0: 0, x1: Math.floor(width * .34), y0: Math.floor(height * .68), y1: height, expected: [TEMPLATE.markerCenters.bl.x / TEMPLATE.width, TEMPLATE.markerCenters.bl.y / TEMPLATE.height] },
+    br: { x0: Math.floor(width * .66), x1: width, y0: Math.floor(height * .68), y1: height, expected: [TEMPLATE.markerCenters.br.x / TEMPLATE.width, TEMPLATE.markerCenters.br.y / TEMPLATE.height] }
   };
   const found = {};
   for (const [key, region] of Object.entries(regions)) {
@@ -339,6 +340,27 @@ function detectMarkers(rgba, width, height) {
   return found;
 }
 function cornerName(key) { return ({ tl: 'superior izquierda', tr: 'superior derecha', br: 'inferior derecha', bl: 'inferior izquierda' })[key]; }
+function distanceBetween(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+function getDetectedQuizType(markers) {
+  const horizontal = (distanceBetween(markers.tl, markers.tr) + distanceBetween(markers.bl, markers.br)) / 2;
+  const vertical = (distanceBetween(markers.tl, markers.bl) + distanceBetween(markers.tr, markers.br)) / 2;
+  const observedRatio = horizontal / Math.max(1, vertical);
+  const ratio20 = 1028 / 1170;
+  const ratio30 = 1028 / 1538;
+  return Math.abs(observedRatio - ratio20) <= Math.abs(observedRatio - ratio30) ? 20 : 30;
+}
+function verifySelectedQuizType(markers) {
+  const detectedCount = getDetectedQuizType(markers);
+  if (detectedCount !== QUESTION_COUNT) {
+    const error = new Error('Esta hoja corresponde a QUIZ de ' + detectedCount + ' preguntas, pero en Clave está seleccionado ' + QUESTION_COUNT + '. Cambia el formato en Clave y vuelve a escanear.');
+    error.code = 'QUIZ_TYPE_MISMATCH';
+    error.detectedCount = detectedCount;
+    throw error;
+  }
+  return detectedCount;
+}
 function polygonArea(points) {
   let total = 0;
   for (let i = 0; i < points.length; i++) {
@@ -747,7 +769,7 @@ async function openLiveScanner() {
     return;
   }
   if (!store.answerKey.every(Boolean)) {
-    showMessage('Antes de escanear, configura las ${QUESTION_COUNT} respuestas correctas en la sección Clave.', 'error');
+    showMessage('Antes de escanear, configura las ' + QUESTION_COUNT + ' respuestas correctas en la sección Clave.', 'error');
     switchTab('key');
     return;
   }
@@ -829,7 +851,8 @@ function liveDetectionLoop(timestamp) {
   try {
     const ctx = drawVideoCoverToCanvas(ui.liveVideo, livePreviewCanvas);
     const frame = ctx.getImageData(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
-    detectMarkers(frame.data, frame.width, frame.height);
+    const liveMarkers = detectMarkers(frame.data, frame.width, frame.height);
+    verifySelectedQuizType(liveMarkers);
     liveStableFrames += 1;
     if (liveStableFrames >= 3 && !liveCaptureTriggered) {
       liveMarkersReady = true;
@@ -849,8 +872,13 @@ function liveDetectionLoop(timestamp) {
     liveMarkersReady = false;
     liveCaptureTriggered = false;
     ui.liveViewfinder.classList.remove('locked');
-    ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
-    setLiveStatus('Alinea la tarjeta completa. Los cuatro cuadrados deben verse dentro de la guía.');
+    if (error && error.code === 'QUIZ_TYPE_MISMATCH') {
+      ui.liveLockBadge.textContent = 'FORMATO INCORRECTO';
+      setLiveStatus(error.message, 'error');
+    } else {
+      ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
+      setLiveStatus('Alinea la tarjeta completa. Los cuatro cuadrados deben verse dentro de la guía.');
+    }
   } finally {
     liveBusy = false;
   }
@@ -878,6 +906,7 @@ async function captureAndGradeLive() {
     const sourceImage = captureContext.getImageData(0, 0, captureCanvas.width, captureCanvas.height);
     // Re-detect on the full-resolution still frame; never rely only on the live preview lock.
     const markers = detectMarkers(sourceImage.data, sourceImage.width, sourceImage.height);
+    verifySelectedQuizType(markers);
     const warped = warpToTemplate(sourceImage.data, sourceImage.width, sourceImage.height, markers);
     const answers = readAnswerBubbles(warped.data, warped.width, warped.height);
     currentFile = null;

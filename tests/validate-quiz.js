@@ -40,6 +40,11 @@ for (const count of [20, 30]) {
   assert.equal(config.bubbleCenters.rowY.length, count / 2);
 
   const svg = readSvg(count);
+  assert.match(svg, new RegExp('width="1199" height="' + config.referenceSize.height + '"'));
+  assert.match(svg, new RegExp('<rect width="1199" height="' + config.referenceSize.height + '" fill="#ffffff"'));
+  assert.match(svg, new RegExp('Tarjeta vertical de ' + count + ' preguntas'));
+  assert.equal([...svg.matchAll(/<rect x="(?:82|610)" y="416" width="490" height="(\\d+)"/g)].length, 2);
+  assert.equal(new Set([...svg.matchAll(/<rect x="(?:82|610)" y="416" width="490" height="(\\d+)"/g)].map(match => match[1])).size, 1);
   const actualBubbles = bubbleCenters(svg);
   assert.equal(actualBubbles.length, count * 4, 'Cantidad de burbujas incorrecta para QUIZ ' + count);
 

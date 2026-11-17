@@ -195,11 +195,11 @@ function updateQuizTypePresentation() {
 }
 function changeQuizType(nextCount) {
   if (!QUESTION_COUNTS.includes(nextCount) || nextCount === QUESTION_COUNT) return;
-  if (liveStream) stopLiveScanner(true);
   if (currentRead && !confirm('Cambiar el tipo de QUIZ cerrará la lectura actual sin guardarla. ¿Deseas continuar?')) {
     updateQuizTypePresentation();
     return;
   }
+  if (liveStream) stopLiveScanner(true);
   store.answerKeys = store.answerKeys || {};
   store.answerKeys[QUESTION_COUNT] = normalizeKey(store.answerKey, QUESTION_COUNT);
   QUESTION_COUNT = nextCount;
@@ -865,12 +865,12 @@ function updateLiveGuideGeometry() {
 }
 window.addEventListener('resize', () => requestAnimationFrame(updateLiveGuideGeometry));
 
-function drawVideoCoverToCanvas(video, canvas) {
+function drawVideoCoverToCanvas(video, canvas, maxDimension = 1800) {
   // Preserve the entire camera frame. Cropping to the selected sheet ratio would
   // hide the top or bottom markers when the other QUIZ format is presented.
   const sourceW = video.videoWidth, sourceH = video.videoHeight;
   if (!sourceW || !sourceH) throw new Error('La cámara todavía no está lista.');
-  const scale = Math.min(1, 1800 / Math.max(sourceW, sourceH));
+  const scale = Math.min(1, maxDimension / Math.max(sourceW, sourceH));
   const targetW = Math.max(1, Math.round(sourceW * scale));
   const targetH = Math.max(1, Math.round(sourceH * scale));
   if (canvas.width !== targetW) canvas.width = targetW;
@@ -891,7 +891,7 @@ function liveDetectionLoop(timestamp) {
   liveBusy = true;
   liveLastDetection = timestamp;
   try {
-    const ctx = drawVideoCoverToCanvas(ui.liveVideo, livePreviewCanvas);
+    const ctx = drawVideoCoverToCanvas(ui.liveVideo, livePreviewCanvas, 720);
     const frame = ctx.getImageData(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
     const liveMarkers = detectMarkers(frame.data, frame.width, frame.height);
     verifySelectedQuizType(liveMarkers);

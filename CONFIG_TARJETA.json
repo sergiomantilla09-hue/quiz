@@ -67,5 +67,149 @@
     "maximumScore": 50,
     "pointsPerCorrectAnswer": 1.66666667,
     "unansweredOrMultipleMarks": 0
-  }
+  },
+  "formats": {
+    "20": {
+      "templateId": "QUIZ-R20-MOBILE-V1",
+      "brand": "QUIZ",
+      "assessmentType": "20 preguntas de selección múltiple en dos columnas de 10",
+      "referenceImage": "assets/plantilla_quiz_20.svg",
+      "referenceSize": {
+        "width": 1199,
+        "height": 1312
+      },
+      "fiducialMarkers": {
+        "topLeft": {
+          "x": 86,
+          "y": 67
+        },
+        "topRight": {
+          "x": 1114,
+          "y": 65
+        },
+        "bottomRight": {
+          "x": 1114,
+          "y": 1237
+        },
+        "bottomLeft": {
+          "x": 86,
+          "y": 1237
+        }
+      },
+      "answerOptions": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "bubbleCenters": {
+        "leftColumnX": [
+          256.8,
+          344.5,
+          432.2,
+          520.2
+        ],
+        "rightColumnX": [
+          785.4,
+          873.6,
+          961.8,
+          1050.9
+        ],
+        "rowY": [
+          516.8,
+          575.3,
+          633.2,
+          691.6,
+          750.4,
+          809.1,
+          867.7,
+          926,
+          984.7,
+          1043.6
+        ]
+      },
+      "scoring": {
+        "questions": 20,
+        "maximumScore": 50,
+        "pointsPerCorrectAnswer": 2.5,
+        "unansweredOrMultipleMarks": 0
+      }
+    },
+    "30": {
+      "templateId": "QUIZ-R30-MOBILE-V1",
+      "brand": "QUIZ",
+      "assessmentType": "30 preguntas de selección múltiple en dos columnas de 15",
+      "referenceImage": "assets/plantilla_quiz_30.svg",
+      "referenceSize": {
+        "width": 1199,
+        "height": 1700
+      },
+      "fiducialMarkers": {
+        "topLeft": {
+          "x": 86,
+          "y": 67
+        },
+        "topRight": {
+          "x": 1114,
+          "y": 65
+        },
+        "bottomRight": {
+          "x": 1114,
+          "y": 1603
+        },
+        "bottomLeft": {
+          "x": 86,
+          "y": 1603
+        }
+      },
+      "answerOptions": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "bubbleCenters": {
+        "leftColumnX": [
+          256.8,
+          344.5,
+          432.2,
+          520.2
+        ],
+        "rightColumnX": [
+          785.4,
+          873.6,
+          961.8,
+          1050.9
+        ],
+        "rowY": [
+          516.8,
+          575.3,
+          633.2,
+          691.6,
+          750.4,
+          809.1,
+          867.7,
+          926,
+          984.7,
+          1043.6,
+          1102.1,
+          1160.6,
+          1219.1,
+          1277.6,
+          1336.1
+        ]
+      },
+      "scoring": {
+        "questions": 30,
+        "maximumScore": 50,
+        "pointsPerCorrectAnswer": 1.66666667,
+        "unansweredOrMultipleMarks": 0
+      }
+    }
+  },
+  "availableQuestionCounts": [
+    20,
+    30
+  ],
+  "defaultQuestionCount": 30
 }

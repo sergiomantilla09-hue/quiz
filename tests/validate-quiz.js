@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 
 const app = fs.readFileSync('app.js', 'utf8');
 const index = fs.readFileSync('index.html', 'utf8');
@@ -116,4 +117,76 @@ assert.match(app, /downloadCustomizedSheet\('jpg'\)/);
 assert.match(app, /downloadCustomizedSheet\('svg'\)/);
 assert.doesNotMatch(app, /sheetEvaluationType|sheetCustomLabelField|sheetCustomLabel|ui\.templateLink/);
 
-console.log('Validación QUIZ correcta: formatos 20/30, geometría OMR, claves, lectura por color, consenso multiframe y editor/descargas.');
+
+// Behavioral OMR tests: synthetic marks on a white sheet, independent of a browser.
+function extractFunction(name) {
+  const start = app.indexOf('function ' + name + '(');
+  assert.notEqual(start, -1, 'No se encontró la función ' + name);
+  const end = app.indexOf('\\nfunction ', start + 1);
+  return app.slice(start, end === -1 ? app.length : end);
+}
+const omrSandbox = {
+  TEMPLATE: { options: ['A', 'B', 'C', 'D'] },
+  QUESTION_COUNT: 20,
+  ROWS_PER_COLUMN: 10
+};
+vm.createContext(omrSandbox);
+vm.runInContext([
+  extractFunction('clamp'),
+  extractFunction('measureBubble'),
+  extractFunction('readAnswerBubbles'),
+  extractFunction('mergeFrameReads'),
+  extractFunction('isPendingAnswer')
+].join('\\n'), omrSandbox);
+
+function syntheticBubble(color, mark = 'filled') {
+  const width = 80, height = 80, cx = 40, cy = 40;
+  const pixels = new Uint8ClampedArray(width * height * 4);
+  for (let p = 0; p < pixels.length; p += 4) {
+    pixels[p] = 255; pixels[p + 1] = 255; pixels[p + 2] = 255; pixels[p + 3] = 255;
+  }
+  if (mark !== 'empty') {
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const dx = x - cx, dy = y - cy;
+      const inside = mark === 'filled'
+        ? dx * dx + dy * dy <= 7 * 7
+        : dx * dx + dy * dy <= 9 * 9 && Math.abs(dy - dx * .6) <= 1.5;
+      if (inside) {
+        const p = (y * width + x) * 4;
+        pixels[p] = color[0]; pixels[p + 1] = color[1]; pixels[p + 2] = color[2]; pixels[p + 3] = 255;
+      }
+    }
+  }
+  return { pixels, width, height };
+}
+for (const color of [[20, 20, 20], [20, 75, 220], [220, 35, 35]]) {
+  const image = syntheticBubble(color);
+  const measured = omrSandbox.measureBubble(image.pixels, image.width, image.height, 40, 40);
+  assert.equal(measured.isMarked, true, 'Debe reconocer una burbuja rellena en distintos colores');
+}
+const slashImage = syntheticBubble([20, 75, 220], 'slash');
+const slashMeasurement = omrSandbox.measureBubble(slashImage.pixels, 80, 80, 40, 40);
+assert.equal(slashMeasurement.isMarked, false, 'Una línea que cruza la burbuja no debe contarse como relleno');
+assert.ok(slashMeasurement.score >= .12, 'Una marca ambigua debe quedar señalada para revisión');
+
+const frameReads = Array.from({ length: 5 }, (_, frameIndex) =>
+  Array.from({ length: 20 }, (_, questionIndex) => {
+    if (questionIndex === 0) return frameIndex < 4
+      ? { answer: 'B', status: 'ok', marked: ['B'], metrics: [] }
+      : { answer: null, status: 'blank', marked: [], metrics: [] };
+    if (questionIndex === 2) return frameIndex < 3
+      ? { answer: 'A', status: 'ok', marked: ['A'], metrics: [] }
+      : { answer: null, status: 'blank', marked: [], metrics: [] };
+    return { answer: null, status: 'blank', marked: [], metrics: [] };
+  })
+);
+const mergedReads = omrSandbox.mergeFrameReads(frameReads);
+assert.equal(mergedReads[0].answer, 'B', 'Cuatro lecturas iguales deben alcanzar consenso');
+assert.equal(mergedReads[1].confirmedBlank, true, 'Cinco tomas vacías deben confirmar una omisión');
+assert.equal(mergedReads[2].status, 'uncertain', 'Una mayoría insuficiente debe quedar pendiente');
+assert.equal(omrSandbox.isPendingAnswer(mergedReads[0]), false);
+assert.equal(omrSandbox.isPendingAnswer(mergedReads[1]), false, 'Una omisión confirmada no debe bloquear la nota');
+assert.equal(omrSandbox.isPendingAnswer(mergedReads[2]), true);
+
+
+console.log('Validación QUIZ correcta: formatos 20/30, geometría OMR, claves, lectura por color, falsos positivos, consenso multiframe, omisiones confirmadas y editor/descargas.');

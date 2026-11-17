@@ -296,7 +296,7 @@ function initializeSheetPresets() {
   ui.saveSheetPresetBtn?.addEventListener('click', () => {
     const name = ui.sheetPresetName.value.trim();
     if (!name) { showToast('Escribe un nombre para guardar la configuración.'); ui.sheetPresetName.focus(); return; }
-    const snapshot = { name: name.slice(0, 50), questionCount: QUESTION_COUNT, assessmentName: store.assessmentName,
+    const snapshot = { name: name.slice(0, 50), questionCount: QUESTION_COUNT, assessmentName: ui.keyAssessment.value.trim() || store.assessmentName,
       answerKeys: { 20: normalizeKey(QUESTION_COUNT === 20 ? store.answerKey : store.answerKeys[20],20), 30: normalizeKey(QUESTION_COUNT === 30 ? store.answerKey : store.answerKeys[30],30) },
       sheetSettings: readSheetSettingsFromEditor() };
     const existing = store.sheetPresets.findIndex(item => item.name.toLowerCase() === snapshot.name.toLowerCase());

@@ -1,6 +1,6 @@
 # Quiz · Lector de evaluaciones · QUIZ
 
-Aplicación web progresiva (PWA) para leer la tarjeta **BG-LC10-R20-MOBILE-V1** del Colegio Balbino García.
+Aplicación web progresiva (PWA) de **QUIZ** para leer tarjetas de 20 preguntas con opciones A–D.
 
 ## Funciones
 
@@ -28,14 +28,14 @@ Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este re
 
 1. Abre Quiz desde el celular.
 2. En **Clave**, registra el nombre de la evaluación y sus 20 respuestas correctas.
-3. En **Calificar**, escribe el nombre y curso del estudiante.
+3. En **Calificar**, puedes dejar nombre y curso en blanco; ambos son opcionales.
 4. En el escaneo guiado, alinea los cuatro marcadores. Quiz toma la fotografía automáticamente cuando los reconoce.
-5. La nota aparece en una ventana emergente y se guarda automáticamente en el historial. Pulsa **OK · Siguiente estudiante**, escribe el nombre siguiente y presenta la nueva tarjeta.
+5. La nota aparece en una ventana emergente y se guarda automáticamente en el historial. Pulsa **OK · Siguiente estudiante** y presenta la nueva tarjeta. No es necesario ingresar el nombre.
 6. Para fotografías cargadas desde la galería, revisa las respuestas detectadas y guarda el resultado manualmente. En **Historial** puedes exportar los registros a CSV.
 
 ## Tarjeta compatible
 
-Utiliza la tarjeta incluida en `assets/plantilla_balbinista.svg` y conserva visibles los cuatro marcadores. No cambies la posición de las burbujas sin actualizar las coordenadas de lectura.
+Utiliza la tarjeta QUIZ incluida en `assets/plantilla_quiz.svg` y conserva visibles los cuatro marcadores. No cambies la posición de las burbujas sin actualizar las coordenadas de lectura.
 
 La lectura automática debe validarse con tarjetas físicas reales antes de registrar calificaciones oficiales. El historial queda en el almacenamiento local del navegador; exporta periódicamente el CSV como respaldo.
 

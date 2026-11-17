@@ -53,13 +53,14 @@ const { chromium } = require('playwright');
     await page.locator('#loadSheetPresetBtn').click();
     assert.equal(await page.locator('#sheetArea').inputValue(), 'Matemáticas', 'Debe restaurar área desde configuración guardada');
     assert.equal(await page.locator('#sheetName').inputValue(), 'Recuperación tercer periodo');
-    assert.ok(await page.locator('#sheetPreviewImage').getAttribute('src'), 'La vista previa debe renderizar la hoja completa');
+    await page.waitForFunction(() => document.querySelector('#sheetPreviewImage')?.naturalWidth === 1199, null, { timeout: 12000 });
     assert.equal(await page.locator('#sheetPreviewImage').evaluate(img => img.naturalWidth), 1199, 'La vista previa debe usar la plantilla real');
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('[data-tab="key"]').click();
     assert.equal(await page.locator('#sheetName').inputValue(), 'Recuperación tercer periodo', 'Los campos deben persistir al recargar');
-    assert.equal(await page.locator('#sheetPreviewImage').evaluate(img => img.naturalWidth), 1199, 'La vista previa debe persistir tras recargar');
+    await page.waitForFunction(() => document.querySelector('#sheetPreviewImage')?.naturalWidth === 1199, null, { timeout: 12000 });
+    assert.equal(await page.locator('#sheetPreviewImage').evaluate(img => img.naturalHeight), 1700, 'La vista previa debe persistir tras recargar');
 
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-browser-'));
     process.stdout.write('Browser: probando PNG 30\\n');
@@ -98,7 +99,7 @@ const { chromium } = require('playwright');
     process.stdout.write('Browser: cambiando a QUIZ 20\\n');
     await page.locator('label.quiz-type-choice').first().click();
     assert.equal(await page.locator('#quizType20').isChecked(), true);
-    assert.equal(await page.locator('#sheetPreviewCount').textContent(), '20 PREGUNTAS');
+    await page.waitForFunction(() => document.querySelector('#sheetPreviewImage')?.naturalHeight === 1312, null, { timeout: 12000 });
     process.stdout.write('Browser: probando PNG 20\\n');
     const png20Download = page.waitForEvent('download');
     await page.locator('#downloadPngBtn').click();

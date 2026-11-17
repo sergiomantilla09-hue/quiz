@@ -1,8 +1,8 @@
-const CACHE_NAME = 'quiz-pwa-v9';
+const CACHE_NAME = 'quiz-pwa-v10';
 const APP_FILES = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './assets/icon-180.png', './assets/icon-192.png', './assets/icon-192.svg', './assets/quiz-mark.svg',
-  './assets/plantilla_balbinista.svg'
+  './assets/plantilla_quiz.svg'
 ];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_FILES)));

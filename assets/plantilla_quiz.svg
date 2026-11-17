@@ -213,6 +213,6 @@
 <line x1="333" y1="1127" x2="333" y2="1162" stroke="#111d4a" stroke-width="3"/>
 <text x="650" y="1153" class="title" font-size="27" text-anchor="middle">Marca solo una opción por pregunta.</text>
 <line x1="216" y1="1230" x2="405" y2="1230" stroke="#aa97d7" stroke-width="3"/>
-<text x="600" y="1238" class="title" font-size="23" text-anchor="middle" letter-spacing="2">BG-LC10-R20-MOBILE-V1</text>
+<text x="600" y="1238" class="title" font-size="23" text-anchor="middle" letter-spacing="2">QUIZ-LC10-R20-MOBILE-V1</text>
 <line x1="795" y1="1230" x2="984" y2="1230" stroke="#aa97d7" stroke-width="3"/>
 </svg>

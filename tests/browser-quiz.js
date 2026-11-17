@@ -59,7 +59,7 @@ const { chromium } = require('playwright');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('[data-tab="key"]').click();
     assert.equal(await page.locator('#sheetName').inputValue(), 'Recuperación tercer periodo', 'Los campos deben persistir al recargar');
-    assert.equal(await page.locator('#sheetPreviewSubject').textContent(), 'Matemáticas · Grado 10-02');
+    assert.equal(await page.locator('#sheetPreviewImage').evaluate(img => img.naturalWidth), 1199, 'La vista previa debe persistir tras recargar');
 
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'quiz-browser-'));
     process.stdout.write('Browser: probando PNG 30\\n');

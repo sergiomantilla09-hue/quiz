@@ -712,7 +712,7 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
   const warnings = [];
   if (currentRead.requiresReview) warnings.push('No se detectaron marcas en ninguna respuesta. Verifica el enfoque y la tarjeta.');
   if (pending > 0) warnings.push(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa; se contarán como incorrectas.`);
-  if (warnings.length && askForPending && !confirm(warnings.join('\\n') + '\\n¿Deseas guardar la nota?')) return null;
+  if (warnings.length && askForPending && !confirm(warnings.join('\n') + '\n¿Deseas guardar la nota?')) return null;
   const record = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`,
     student,

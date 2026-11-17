@@ -690,7 +690,7 @@ function measureBubble(rgba, width, height, centerX, centerY) {
       const p = (y*width+x)*4, r=rgba[p], g=rgba[p+1], b=rgba[p+2];
       const gray=.299*r+.587*g+.114*b, luminanceDrop=Math.max(0,bgGray-gray);
       const colorDistance=Math.sqrt((bg[0]-r)**2+(bg[1]-g)**2+(bg[2]-b)**2);
-      const signal=Math.max(luminanceDrop,colorDistance*.78);
+      const signal=Math.max(luminanceDrop,colorDistance*.72);
       signalSum+=signal; total++; if(signal>=18) ink++; if(signal>=58) strong++;
     }
   }

@@ -668,6 +668,8 @@ async function openLiveScanner() {
       ui.liveVideo.onerror = () => reject(new Error('No se pudo iniciar la vista de cámara.'));
     });
     await ui.liveVideo.play();
+    // Move the live camera to the top of the phone viewport so it becomes the main focus.
+    requestAnimationFrame(() => ui.liveScanner.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     livePreviewCanvas = document.createElement('canvas');
     livePreviewCanvas.width = 720;
     livePreviewCanvas.height = Math.round(720 * TEMPLATE.height / TEMPLATE.width);

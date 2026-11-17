@@ -491,13 +491,16 @@ function updateScoreDisplay() {
 ui.regradeBtn.addEventListener('click', () => { renderResult(); showToast('Nota actualizada.'); });
 ui.studentName.addEventListener('input', () => { if (currentRead) ui.resultStudent.textContent = ui.studentName.value.trim() || 'Estudiante sin identificar'; });
 ui.scanAssessment.addEventListener('input', () => { if (currentRead) ui.resultAssessment.textContent = ui.scanAssessment.value.trim() || store.assessmentName; });
-ui.saveResultBtn.addEventListener('click', () => {
-  if (!currentRead || !store.answerKey.every(Boolean)) return;
+function saveCurrentResult({ askForPending = true, silent = false } = {}) {
+  if (!currentRead || !store.answerKey.every(Boolean)) return null;
   const student = ui.studentName.value.trim();
-  if (!student) { showToast('Escribe el nombre del estudiante antes de guardar.'); ui.studentName.focus(); return; }
+  if (!student) {
+    if (!silent) { showToast('Escribe el nombre del estudiante antes de guardar.'); ui.studentName.focus(); }
+    return null;
+  }
   const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length;
   const pending = currentRead.answers.filter(item => !item.answer || ['multiple', 'uncertain', 'low'].includes(item.status)).length;
-  if (pending > 0 && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return;
+  if (pending > 0 && askForPending && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return null;
   const record = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`,
     student,
@@ -509,13 +512,17 @@ ui.saveResultBtn.addEventListener('click', () => {
     score: Number((correct * 2.5).toFixed(1)),
     answers: currentRead.answers.map(item => item.answer || ''),
     key: [...store.answerKey],
-    source: currentRead.sourceName
+    source: currentRead.sourceName,
+    needsReview: pending > 0,
+    pendingCount: pending
   };
   store.results.unshift(record);
   persist();
   renderHistory();
-  showToast(`Resultado guardado: ${record.score.toFixed(1)} / 50`);
-});
+  if (!silent) showToast(`Resultado guardado: ${record.score.toFixed(1)} / 50`);
+  return record;
+}
+ui.saveResultBtn.addEventListener('click', () => saveCurrentResult({ askForPending: true }));
 ui.newScanBtn.addEventListener('click', () => {
   resetScan();
   ui.scanAssessment.value = store.assessmentName;
@@ -583,7 +590,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 
  
-// Live camera scanner with AR-style fiducial alignment.
+// Live guided scanner: detect the four fiducials, capture automatically and show a score dialog.
 ui.liveScanBtn = $('liveScanBtn');
 ui.liveScanner = $('liveScanner');
 ui.closeLiveScannerBtn = $('closeLiveScannerBtn');
@@ -591,13 +598,19 @@ ui.liveVideo = $('liveVideo');
 ui.liveViewfinder = $('liveViewfinder');
 ui.liveLockBadge = $('liveLockBadge');
 ui.liveStatus = $('liveStatus');
-ui.liveCaptureBtn = $('liveCaptureBtn');
+ui.scoreDialog = $('scoreDialog');
+ui.dialogStudent = $('dialogStudent');
+ui.dialogScore = $('dialogScore');
+ui.dialogCorrect = $('dialogCorrect');
+ui.dialogNote = $('dialogNote');
+ui.dialogOkBtn = $('dialogOkBtn');
 
 let liveStream = null;
 let liveFrameRequest = 0;
 let liveLastDetection = 0;
 let liveStableFrames = 0;
 let liveMarkersReady = false;
+let liveCaptureTriggered = false;
 let liveBusy = false;
 let livePreviewCanvas = null;
 
@@ -617,20 +630,17 @@ function stopLiveScanner(hide = true) {
     ui.liveVideo.srcObject = null;
   }
   liveMarkersReady = false;
+  liveCaptureTriggered = false;
   liveStableFrames = 0;
-  if (ui.liveCaptureBtn) {
-    ui.liveCaptureBtn.disabled = true;
-    ui.liveCaptureBtn.textContent = 'Esperando los cuatro marcadores…';
-  }
   if (ui.liveViewfinder) ui.liveViewfinder.classList.remove('locked');
   if (ui.liveLockBadge) ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
   if (ui.liveScanBtn) ui.liveScanBtn.disabled = false;
   if (hide && ui.liveScanner) ui.liveScanner.hidden = true;
 }
-ui.liveScanBtn.addEventListener('click', openLiveScanner);
+ui.liveScanBtn.addEventListener('click', () => openLiveScanner({ allowEmptyName: false }));
 ui.closeLiveScannerBtn.addEventListener('click', () => stopLiveScanner(true));
 
-async function openLiveScanner() {
+async function openLiveScanner({ allowEmptyName = false } = {}) {
   clearMessage();
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     showMessage('La cámara en vivo necesita abrir Quiz desde su dirección HTTPS y permitir el acceso a la cámara.', 'error');
@@ -641,10 +651,17 @@ async function openLiveScanner() {
     switchTab('key');
     return;
   }
+  if (!allowEmptyName && !ui.studentName.value.trim()) {
+    showMessage('Escribe el nombre del estudiante antes de iniciar el escaneo.', 'error');
+    ui.studentName.focus();
+    return;
+  }
   stopLiveScanner(false);
   ui.liveScanner.hidden = false;
   ui.liveScanBtn.disabled = true;
-  setLiveStatus('Solicitando acceso a la cámara…');
+  setLiveStatus(ui.studentName.value.trim()
+    ? 'Alinea los cuatro cuadrados negros con las guías.'
+    : 'Escribe el nombre del siguiente estudiante. La cámara se activará al completar el nombre.');
   try {
     liveStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
@@ -665,10 +682,10 @@ async function openLiveScanner() {
     livePreviewCanvas = document.createElement('canvas');
     livePreviewCanvas.width = 720;
     livePreviewCanvas.height = Math.round(720 * TEMPLATE.height / TEMPLATE.width);
-    setLiveStatus('Alinea los cuatro cuadrados negros con las guías.');
     liveLastDetection = 0;
     liveStableFrames = 0;
     liveMarkersReady = false;
+    liveCaptureTriggered = false;
     liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
   } catch (error) {
     console.error('Quiz camera:', error);
@@ -708,6 +725,18 @@ function liveDetectionLoop(timestamp) {
   if (!liveStream || ui.liveScanner.hidden) return;
   liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
   if (liveBusy || timestamp - liveLastDetection < 220 || ui.liveVideo.readyState < 2) return;
+
+  // After a result is acknowledged, wait for the next student's name before detecting a new sheet.
+  if (!ui.studentName.value.trim()) {
+    liveStableFrames = 0;
+    liveMarkersReady = false;
+    liveCaptureTriggered = false;
+    ui.liveViewfinder.classList.remove('locked');
+    ui.liveLockBadge.textContent = 'LISTO PARA EL SIGUIENTE ESTUDIANTE';
+    setLiveStatus('Escribe el nombre del siguiente estudiante. La cámara ya está lista.');
+    return;
+  }
+
   liveBusy = true;
   liveLastDetection = timestamp;
   try {
@@ -715,14 +744,15 @@ function liveDetectionLoop(timestamp) {
     const frame = ctx.getImageData(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
     detectMarkers(frame.data, frame.width, frame.height);
     liveStableFrames += 1;
-    if (liveStableFrames >= 3) {
+    if (liveStableFrames >= 3 && !liveCaptureTriggered) {
       liveMarkersReady = true;
+      liveCaptureTriggered = true;
       ui.liveViewfinder.classList.add('locked');
       ui.liveLockBadge.textContent = '4 / 4 MARCADORES RECONOCIDOS';
-      setLiveStatus('¡Tarjeta alineada! Mantén el celular quieto y captura.', 'ready');
-      ui.liveCaptureBtn.disabled = false;
-      ui.liveCaptureBtn.textContent = 'Capturar y calificar →';
-    } else {
+      setLiveStatus('¡Tarjeta reconocida! Capturando automáticamente…', 'ready');
+      // Small pause lets the visual lock become visible before taking the still frame.
+      setTimeout(() => captureAndGradeLive(), 180);
+    } else if (!liveCaptureTriggered) {
       ui.liveViewfinder.classList.remove('locked');
       ui.liveLockBadge.textContent = 'Detectando…';
       setLiveStatus('Reconociendo los cuatro puntos… ' + liveStableFrames + '/3');
@@ -730,21 +760,28 @@ function liveDetectionLoop(timestamp) {
   } catch (error) {
     liveStableFrames = 0;
     liveMarkersReady = false;
+    liveCaptureTriggered = false;
     ui.liveViewfinder.classList.remove('locked');
     ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
-    ui.liveCaptureBtn.disabled = true;
-    ui.liveCaptureBtn.textContent = 'Esperando los cuatro marcadores…';
     setLiveStatus('Alinea la tarjeta completa. Los cuatro cuadrados deben verse dentro de la guía.');
   } finally {
     liveBusy = false;
   }
 }
 
-ui.liveCaptureBtn.addEventListener('click', captureAndGradeLive);
+function showScoreDialog(record) {
+  ui.dialogStudent.textContent = record.student + (record.course ? ' · ' + record.course : '');
+  ui.dialogScore.textContent = Number(record.score).toFixed(1);
+  ui.dialogCorrect.textContent = record.correct + ' de 20 respuestas correctas';
+  ui.dialogNote.textContent = record.needsReview
+    ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
+    : 'Resultado guardado automáticamente en el historial.';
+  ui.scoreDialog.hidden = false;
+  ui.dialogOkBtn.focus();
+}
+
 async function captureAndGradeLive() {
-  if (!liveMarkersReady || !liveStream || !ui.liveVideo.videoWidth) return;
-  ui.liveCaptureBtn.disabled = true;
-  ui.liveCaptureBtn.textContent = 'Capturando…';
+  if (!liveMarkersReady || !liveStream || !ui.liveVideo.videoWidth || !liveCaptureTriggered) return;
   setLiveStatus('Capturando y leyendo las 20 respuestas…');
   try {
     const captureCanvas = document.createElement('canvas');
@@ -766,23 +803,39 @@ async function captureAndGradeLive() {
     ui.imageFileName.textContent = 'Captura realizada desde la cámara guiada';
     ui.photoPreview.src = captureCanvas.toDataURL('image/jpeg', .9);
     ui.imageStage.hidden = false;
-    stopLiveScanner(true);
     renderResult();
-    ui.resultPanel.hidden = false;
-    const needsReview = answers.some(item => item.status !== 'ok');
-    showMessage(needsReview
-      ? 'Tarjeta capturada. Revisa las preguntas marcadas antes de guardar la nota.'
-      : 'Tarjeta capturada y leída. Verifica el resultado antes de guardarlo.', 'success');
-    ui.resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const record = saveCurrentResult({ askForPending: false, silent: true });
+    if (!record) throw new Error('No pude guardar el resultado. Comprueba que el nombre del estudiante esté escrito.');
+    stopLiveScanner(true);
+    ui.resultPanel.hidden = true;
+    showScoreDialog(record);
   } catch (error) {
     console.error('Quiz live capture:', error);
-    setLiveStatus(error && error.message ? error.message : 'No se pudo leer la tarjeta. Alinea de nuevo los cuatro marcadores.', 'error');
-    ui.liveCaptureBtn.disabled = false;
-    ui.liveCaptureBtn.textContent = 'Intentar de nuevo';
     liveMarkersReady = false;
+    liveCaptureTriggered = false;
     liveStableFrames = 0;
+    setLiveStatus(error && error.message ? error.message : 'No se pudo leer la tarjeta. Alinea de nuevo los cuatro marcadores.', 'error');
+    if (liveStream && !liveFrameRequest) liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
   }
 }
+
+ui.dialogOkBtn.addEventListener('click', async () => {
+  ui.scoreDialog.hidden = true;
+  currentRead = null;
+  currentFile = null;
+  currentWarpedPreview = null;
+  ui.resultPanel.hidden = true;
+  ui.imageStage.hidden = true;
+  ui.photoPreview.removeAttribute('src');
+  ui.cameraInput.value = '';
+  ui.galleryInput.value = '';
+  ui.studentName.value = '';
+  ui.studentId.value = '';
+  clearMessage();
+  // Reopen the live camera immediately. It waits for the next student's name before scanning.
+  await openLiveScanner({ allowEmptyName: true });
+  ui.studentName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && liveStream) stopLiveScanner(true);

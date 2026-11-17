@@ -14,6 +14,9 @@ Aplicación web progresiva (PWA) de **QUIZ** para leer tarjetas de 20 o 30 pregu
 - Señala preguntas sin marca, con doble marca o con marca tenue.
 - Permite corregir manualmente las lecturas dudosas.
 - Mantiene una clave independiente para cada formato.
+- Incluye un editor de hoja para personalizar asignatura, grado (1.º a 11.º) y tipo de evaluación (Recuperación, Evaluación 1, Evaluación 2, Nivelación u otra denominación).
+- Muestra una vista previa del encabezado y descarga un SVG personalizado con los datos elegidos, sin alterar las coordenadas de lectura.
+- Centra verticalmente la numeración dentro de las cápsulas de cada fila.
 - Calcula la nota sobre 50: en QUIZ 20 cada acierto vale 2,5; en QUIZ 30 aplica 50/30 puntos por acierto.
 - Guarda los resultados en el dispositivo y permite exportarlos a CSV.
 - Incluye caché para uso sin conexión después de la primera carga.
@@ -30,10 +33,11 @@ Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este re
 
 1. Abre Quiz desde el celular.
 2. En **Clave**, selecciona si la evaluación tiene 20 o 30 preguntas y registra la clave correspondiente.
-3. En **Calificar**, puedes dejar nombre y curso en blanco; ambos son opcionales.
-4. En el escaneo guiado, alinea los cuatro marcadores. Quiz toma la fotografía automáticamente cuando los reconoce.
-5. La nota aparece en una ventana emergente y se guarda automáticamente en el historial. Pulsa **OK · Siguiente estudiante** y presenta la nueva tarjeta. No es necesario ingresar el nombre.
-6. Para fotografías cargadas desde la galería, revisa las respuestas detectadas y guarda el resultado manualmente. En **Historial** puedes exportar los registros a CSV.
+3. En el editor **Personalizar tarjeta**, escribe el área, elige el grado y el tipo de evaluación. La vista previa se actualiza al cambiar los datos; pulsa **Descargar hoja personalizada** para generar la tarjeta lista para imprimir.
+4. En **Calificar**, puedes dejar nombre y curso en blanco; ambos son opcionales.
+5. En el escaneo guiado, alinea los cuatro marcadores. Quiz toma la fotografía automáticamente cuando los reconoce.
+6. La nota aparece en una ventana emergente y se guarda automáticamente en el historial. Pulsa **OK · Siguiente estudiante** y presenta la nueva tarjeta. No es necesario ingresar el nombre.
+7. Para fotografías cargadas desde la galería, revisa las respuestas detectadas y guarda el resultado manualmente. En **Historial** puedes exportar los registros a CSV.
 
 ## Tarjeta compatible
 

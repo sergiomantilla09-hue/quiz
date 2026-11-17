@@ -96,7 +96,7 @@ assert.match(app, /plantilla_quiz_30\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_20\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_30\.svg/);
 
-for (const id of ['sheetArea', 'sheetGrade', 'sheetName', 'sheetPreviewSubject', 'downloadPngBtn', 'downloadJpgBtn', 'downloadSvgBtn']) {
+for (const id of ['sheetArea', 'sheetGrade', 'sheetName', 'sheetPreviewImage', 'downloadPngBtn', 'downloadJpgBtn', 'downloadSvgBtn']) {
   assert.ok(index.includes('id="' + id + '"'), 'Falta control del editor: ' + id);
 }
 for (const id of ['sheetTypePill', 'sheetTypeLabel', 'sheetSubjectLine']) {

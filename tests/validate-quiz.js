@@ -115,6 +115,16 @@ assert.match(app, /No se detectaron marcas en ninguna respuesta/);
 assert.match(app, /LIVE_CAPTURE_FRAME_COUNT = 5/);
 assert.match(app, /LIVE_CAPTURE_INTERVAL_MS = 180/);
 assert.match(app, /function measureBubble\(rgba/);
+assert.match(app, /function renderAnswerPhoto/);
+assert.match(app, /answerPhotoCanvas/);
+assert.match(app, /sheetPresets/);
+assert.match(app, /buildCustomizedSheetSvg/);
+assert.match(index, /id="sheetPresetSelect"/);
+assert.match(index, /id="saveSheetPresetBtn"/);
+assert.match(index, /id="answerPhotoCanvas"/);
+assert.match(index, /Lectura sobre la tarjeta/);
+assert.match(readSvg(20), /Fecha:/);
+assert.match(readSvg(30), /Fecha:/);
 assert.match(app, /colorDistance/);
 assert.match(app, /downloadCustomizedSheet\('png'\)/);
 assert.match(app, /downloadCustomizedSheet\('jpg'\)/);
@@ -167,7 +177,7 @@ function syntheticBubble(color, mark = 'filled') {
   }
   return { pixels, width, height };
 }
-for (const color of [[20, 20, 20], [20, 75, 220], [220, 35, 35]]) {
+for (const color of [[20, 20, 20], [20, 75, 220], [220, 35, 35], [150, 150, 150], [220, 190, 210], [255, 235, 80]]) {
   const image = syntheticBubble(color);
   const measured = omrSandbox.measureBubble(image.pixels, image.width, image.height, 40, 40);
   assert.equal(measured.isMarked, true, 'Debe reconocer una burbuja rellena en distintos colores');

@@ -122,8 +122,12 @@ assert.doesNotMatch(app, /sheetEvaluationType|sheetCustomLabelField|sheetCustomL
 function extractFunction(name) {
   const start = app.indexOf('function ' + name + '(');
   assert.notEqual(start, -1, 'No se encontró la función ' + name);
-  const end = app.indexOf('\nfunction ', start + 1);
-  return app.slice(start, end === -1 ? app.length : end);
+  const candidates = [
+    app.indexOf('\nfunction ', start + 1),
+    app.indexOf('\nasync function ', start + 1)
+  ].filter(position => position !== -1);
+  const end = candidates.length ? Math.min(...candidates) : app.length;
+  return app.slice(start, end);
 }
 const omrSandbox = {
   TEMPLATE: { options: ['A', 'B', 'C', 'D'] },

@@ -1,0 +1,16 @@
+{
+  "name": "Pliego · Generador de exámenes",
+  "short_name": "Pliego",
+  "description": "Generador local de exámenes imprimibles con versiones aleatorias y hoja óptica QUIZ.",
+  "lang": "es-CO",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2f5f3",
+  "theme_color": "#183f3a",
+  "icons": [
+    {"src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

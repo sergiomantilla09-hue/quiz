@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#183f3a">
+  <meta name="description" content="Generador local de evaluaciones imprimibles con versiones aleatorias y tabla de respuestas QUIZ integrada.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon-192.png">
+  <title>Pliego · Generador de exámenes</title>
+  <style>
+    :root{--ink:#182725;--muted:#697673;--line:#dfe6e3;--paper:#fff;--bg:#f2f5f3;--green:#1d5149;--green2:#2f6c60;--pale:#e9f1ee;--amber:#94651f;--amber-bg:#fff5df;--red:#9e3d39;--red-bg:#fff0ef;--shadow:0 12px 32px rgba(23,44,38,.08);--radius:17px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink)}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer}.app-shell{max-width:1440px;margin:0 auto;padding:22px clamp(14px,3vw,34px) 60px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:24px}.brand{display:flex;align-items:center;gap:13px}.brand-mark{width:46px;height:46px;border-radius:14px;background:var(--green);color:white;display:grid;place-items:center;font-weight:900;font-size:21px;letter-spacing:-2px;box-shadow:0 7px 18px #1d514933}.brand h1{font-size:19px;line-height:1.1;margin:0;letter-spacing:-.4px}.brand p{font-size:11px;letter-spacing:1.2px;color:var(--muted);margin:5px 0 0;font-weight:750}.top-actions{display:flex;align-items:center;gap:9px}.status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:#2d9470;display:inline-block}.layout{display:grid;grid-template-columns:minmax(330px,420px) minmax(0,1fr);gap:22px;align-items:start}.sidebar{display:flex;flex-direction:column;gap:15px}.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:19px;box-shadow:var(--shadow)}.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}.step{display:flex;align-items:center;gap:9px}.step-num{width:27px;height:27px;border-radius:9px;background:var(--pale);color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:850}.card h2{font-size:15px;margin:0;letter-spacing:-.2px}.card-head p{margin:4px 0 0;color:var(--muted);font-size:12px;line-height:1.35}.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field.full{grid-column:1/-1}.field label,.field>span{font-size:11px;font-weight:750;color:#52615d}.field input,.field select,.field textarea{width:100%;border:1px solid #d8e1dd;border-radius:10px;padding:10px 11px;background:#fff;color:var(--ink);outline:none;min-width:0;font-size:13px}.field input:focus,.field select:focus,.field textarea:focus{border-color:#77a69a;box-shadow:0 0 0 3px #e5f0ed}.field textarea{min-height:70px;resize:vertical;line-height:1.45}.inline-fields{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.logo-control{display:flex;align-items:center;gap:10px;padding:10px;border:1px dashed #cdd8d3;border-radius:11px;margin-top:11px}.logo-preview{width:42px;height:42px;border-radius:8px;object-fit:contain;background:#f6f8f7;border:1px solid var(--line)}.logo-placeholder{width:42px;height:42px;display:grid;place-items:center;color:#81908a;background:#f6f8f7;border-radius:8px;font-size:19px}.small{font-size:11px;color:var(--muted);line-height:1.45}.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:750;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s ease}.btn:disabled{opacity:.45;cursor:not-allowed}.btn-primary{background:var(--green);color:white}.btn-primary:hover:not(:disabled){background:#153e38;transform:translateY(-1px)}.btn-secondary{background:var(--pale);color:var(--green)}.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}.btn-danger{background:var(--red-bg);color:var(--red)}.btn-small{padding:7px 10px;font-size:11px}.textarea-wrap{position:relative}.source-text{min-height:300px!important;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px!important;line-height:1.55!important}.paste-toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}.format-help{margin-top:11px;padding:11px 12px;border-radius:10px;background:#f7f9f8;color:#64716d;font-size:11px;line-height:1.5}.format-help strong{color:#42544e}.review-card{margin-top:14px}.review-list{display:flex;flex-direction:column;gap:10px;max-height:550px;overflow:auto;padding-right:3px}.q-review{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fbfcfb}.q-review-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}.q-number{font-size:11px;font-weight:850;color:var(--green);background:var(--pale);border-radius:7px;padding:5px 8px}.q-review textarea{width:100%;min-height:68px;border:1px solid #dce4e0;border-radius:8px;padding:8px;font-size:12px;line-height:1.4;resize:vertical}.options-edit{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}.option-edit{display:flex;align-items:flex-start;gap:6px}.option-edit b{color:#53635e;font-size:11px;padding-top:7px;min-width:12px}.option-edit input{width:100%;min-width:0;border:1px solid #dce4e0;border-radius:8px;padding:7px 8px;font-size:11px}.warning{border-radius:10px;padding:10px 12px;background:var(--amber-bg);color:#75511d;font-size:11px;line-height:1.45}.error{background:var(--red-bg);color:#8d3531}.success{background:#ebf5ef;color:#286c4a}.controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #edf0ee;font-size:12px}.toggle-row:last-child{border-bottom:0}.toggle-row small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.switch{appearance:none;width:36px;height:21px;border-radius:99px;background:#cbd5d0;position:relative;flex:none;transition:.15s}.switch:before{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:white;top:3px;left:3px;box-shadow:0 1px 3px #0002;transition:.15s}.switch:checked{background:var(--green2)}.switch:checked:before{left:18px}.content{min-width:0}.workspace{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}.workspace-head{padding:19px 21px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}.workspace-title h2{margin:0;font-size:17px;letter-spacing:-.3px}.workspace-title p{margin:4px 0 0;color:var(--muted);font-size:12px}.workspace-actions{display:flex;gap:8px;flex-wrap:wrap}.empty-workspace{min-height:460px;display:grid;place-items:center;padding:35px;text-align:center}.empty-icon{width:64px;height:64px;border-radius:20px;background:var(--pale);display:grid;place-items:center;color:var(--green);font-size:28px;margin:0 auto 13px}.empty-workspace h3{margin:0 0 7px;font-size:16px}.empty-workspace p{margin:0 auto;max-width:360px;color:var(--muted);font-size:12px;line-height:1.55}.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:15px 18px;background:#fbfcfb;border-bottom:1px solid var(--line)}.metric{padding:9px 11px;background:#fff;border:1px solid var(--line);border-radius:11px}.metric span{font-size:10px;color:var(--muted);font-weight:700}.metric strong{display:block;font-size:20px;letter-spacing:-.6px;margin-top:2px}.preview-area{padding:19px;background:#edf1ef;min-height:500px}.version-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}.version-tab{border:1px solid #d4ded9;background:#fff;color:#586762;border-radius:9px;padding:8px 12px;font-size:11px;font-weight:800}.version-tab.active{background:var(--green);border-color:var(--green);color:#fff}.preview-help{font-size:11px;color:#697671;margin-bottom:13px}.paper-stack{display:flex;flex-direction:column;align-items:center;gap:18px}.print-page{background:#fff;width:8.5in;height:11in;box-sizing:border-box;padding:.38in .43in .35in;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 24px #172c2617;color:#171d1b;--qfont:9.6pt;--lineheight:1.17;flex:none}.paper-header{display:flex;align-items:center;gap:11px;border-bottom:1.2px solid #26332f;padding-bottom:8px;margin-bottom:10px;min-height:66px}.paper-logo{width:.65in;height:.65in;object-fit:contain;flex:none}.paper-title{min-width:0;flex:1}.paper-institution{font-size:12pt;font-weight:850;line-height:1.14;letter-spacing:-.15px}.paper-assessment{font-size:13pt;font-weight:850;line-height:1.1;margin-top:4px}.paper-subtitle{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:7.5pt;color:#3f4a46;font-weight:650;margin-top:5px}.paper-version{border:1px solid #26332f;border-radius:5px;padding:5px 7px;text-align:center;min-width:54px;font-size:8pt;font-weight:850}.student-fields{font-size:7.4pt;display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin:0 0 9px}.student-fields div{white-space:nowrap}.student-fields span{display:inline-block;border-bottom:1px solid #7c8581;min-width:48%;height:13px;margin-left:4px}.paper-instructions{font-size:7.5pt;line-height:1.25;margin:0 0 7px;color:#27312d;text-align:justify;text-justify:inter-word}.paper-columns{display:grid;grid-template-columns:1fr 1fr;gap:.26in;flex:1;min-height:0}.paper-column{min-width:0;display:flex;flex-direction:column;gap:0;overflow:hidden}.q-block{break-inside:avoid;page-break-inside:avoid;font-size:var(--qfont);line-height:var(--lineheight);color:#151b19;min-width:0;margin:0;padding:0}.q-head{display:flex;gap:5px;align-items:flex-start}.q-no{font-weight:850;min-width:15px;color:#172a24}.q-stem{font-weight:560;white-space:normal;flex:1;min-width:0;text-align:justify;text-justify:inter-word;hyphens:auto}.q-options{display:grid;grid-template-columns:1fr 1fr;gap:1px 9px;margin:2px 0 0 20px}.q-options.list{grid-template-columns:1fr}.q-option{display:flex;gap:4px;align-items:flex-start;min-width:0;white-space:normal}.q-option span{text-align:justify;text-justify:inter-word;hyphens:auto}.q-option b{font-size:.95em;flex:none}.context-block{font-size:var(--qfont);line-height:var(--lineheight);padding:4px 6px;border-left:2px solid #596b64;background:#f5f7f6;white-space:normal;break-inside:avoid;page-break-inside:avoid;text-align:justify;text-justify:inter-word;hyphens:auto}.context-label{font-size:7pt;text-transform:uppercase;letter-spacing:.55px;font-weight:850;color:#53635d;margin-bottom:3px}.compact-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #7e8984;padding-bottom:5px;margin-bottom:9px;font-size:8pt;font-weight:800}.compact-header small{font-size:7pt;color:#5f6b66;font-weight:650}.paper-footer{font-size:6.5pt;color:#7b8580;text-align:center;margin-top:5px}.quiz-exact-wrap{display:block;width:100%;max-width:3.69in;margin:2pt 0 0;break-inside:avoid;page-break-inside:avoid;line-height:0}.quiz-exact-svg{display:block;width:100%;max-width:100%;height:auto;margin:0 auto;object-fit:contain;break-inside:avoid;page-break-inside:avoid}
+    .footnote{padding:13px 20px;color:var(--muted);font-size:10px;background:#fbfcfb;border-top:1px solid var(--line);line-height:1.5}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(15px);background:#183f3a;color:#fff;border-radius:10px;padding:11px 15px;font-size:12px;box-shadow:0 9px 30px #0003;opacity:0;pointer-events:none;transition:.2s;z-index:100}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.modal-backdrop{position:fixed;inset:0;background:#12211fcc;z-index:50;display:none;align-items:center;justify-content:center;padding:18px}.modal-backdrop.open{display:flex}.modal{background:#fff;border-radius:17px;max-width:520px;width:100%;padding:22px;box-shadow:0 20px 70px #0004}.modal h3{margin:0 0 9px;font-size:17px}.modal p{font-size:12px;color:var(--muted);line-height:1.55}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.hidden{display:none!important}
+    #measureHost{position:fixed;left:-20000px;top:0;width:3.8in;visibility:hidden;pointer-events:none}.measure-block{width:100%;}
+    @media(max-width:1050px){.layout{grid-template-columns:360px minmax(0,1fr)}.metric-row{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:800px){.app-shell{padding:13px 11px 40px}.topbar{align-items:flex-start}.top-actions .status{display:none}.layout{grid-template-columns:1fr}.sidebar{order:1}.content{order:2}.source-text{min-height:220px!important}.preview-area{padding:11px;overflow:auto}.paper-stack{align-items:flex-start}.print-page{transform-origin:top left;}.workspace-head{align-items:flex-start;flex-direction:column}.workspace-actions{width:100%}.workspace-actions .btn{flex:1}.metric-row{grid-template-columns:repeat(4,minmax(0,1fr));padding:10px}.metric{padding:7px}.metric strong{font-size:17px}.metric span{font-size:9px}.field-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:450px){.field-grid,.controls-grid{grid-template-columns:1fr}.metric-row{grid-template-columns:repeat(2,1fr)}.brand h1{font-size:16px}.brand-mark{width:40px;height:40px}.q-review .options-edit{grid-template-columns:1fr}}
+    @media print{
+      @page{size:letter;margin:0}
+      html,body{margin:0!important;padding:0!important;background:#fff!important;width:8.5in}
+      body{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+      #appShell,#measureHost,#toast,#confirmModal{display:none!important}
+      body *{visibility:hidden!important}
+      #printRoot,#printRoot *{visibility:visible!important}
+      #printRoot{position:absolute;left:0;top:0;width:8.5in;margin:0;padding:0}
+      .print-page{width:8.5in!important;height:11in!important;min-height:11in!important;max-height:11in!important;margin:0!important;padding:.38in .43in .35in!important;box-shadow:none!important;overflow:hidden!important;break-after:page;page-break-after:always}
+      .print-page:last-child{break-after:auto;page-break-after:auto}
+      .paper-columns{overflow:hidden}
+      .q-block,.context-block,.quiz-exact-wrap,.quiz-exact-svg{break-inside:avoid!important;page-break-inside:avoid!important}
+      .quiz-exact-svg{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">P.</div><div><h1>Pliego · Generador de exámenes</h1><p>COMPOSICIÓN INTELIGENTE PARA IMPRESIÓN</p></div></div>
+      <div class="top-actions"><div class="status"><span class="dot"></span> Trabajo local · Sin nube</div><button class="btn btn-ghost btn-small" id="resetBtn" title="Limpiar el proyecto">Nuevo proyecto</button></div>
+    </header>
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="card">
+          <div class="card-head"><div><div class="step"><span class="step-num">01</span><h2>Encabezado del examen</h2></div><p>Estos datos aparecerán en la hoja impresa.</p></div></div>
+          <div class="field-grid">
+            <div class="field full"><label for="institution">Institución</label><input id="institution" value="Colegio Balbino García" maxlength="100"></div>
+            <div class="field"><label for="subject">Asignatura</label><input id="subject" value="Lengua Castellana" maxlength="70"></div>
+            <div class="field"><label for="grade">Grado / grupo</label><input id="grade" value="Décimo" maxlength="40"></div>
+            <div class="field full"><label for="assessment">Nombre de la evaluación</label><input id="assessment" value="Evaluación de periodo" maxlength="100"></div>
+            <div class="field"><label for="period">Periodo</label><input id="period" value="" placeholder="Ej. Tercer periodo" maxlength="40"></div>
+            <div class="field"><label for="teacher">Docente</label><input id="teacher" value="" placeholder="Nombre del docente" maxlength="70"></div>
+            <div class="field"><label for="date">Fecha</label><input id="date" type="date"></div>
+            <div class="field"><label for="headerGroup">Grupo (línea de identificación)</label><input id="headerGroup" placeholder="Ej. 10-1" maxlength="25"></div>
+            <div class="field full"><label for="instructions">Instrucciones generales</label><textarea id="instructions" rows="2">Lee cuidadosamente cada pregunta y selecciona una sola respuesta.</textarea></div>
+          </div>
+          <div class="logo-control"><div id="logoPreviewWrap"><div class="logo-placeholder">＋</div></div><div style="flex:1"><strong style="font-size:11px">Logo o escudo (opcional)</strong><div class="small">Se conserva localmente y se incluye en el encabezado.</div><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" style="font-size:10px;margin-top:5px;max-width:100%"></div><button class="btn btn-ghost btn-small" id="removeLogo" type="button">Quitar</button></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><div class="step"><span class="step-num">02</span><h2>Material base</h2></div><p>Pega el banco completo: puede tener más de 20 preguntas.</p></div></div>
+          <div class="field"><textarea id="sourceText" class="source-text" spellcheck="false" placeholder="Pega aquí el material base. Ejemplo:\n\nLECTURA 1 · PREGUNTAS 1 A 3\nTexto de lectura compartido...\n\n1. Enunciado de la pregunta\nA) Primera opción\nB) Segunda opción\nC) Tercera opción\nD) Cuarta opción\n\n2. Siguiente pregunta...\nA) ...\nB) ...\nC) ...\nD) ..."></textarea></div>
+          <div class="paste-toolbar"><span class="small" id="sourceCount">0 caracteres</span><button class="btn btn-primary" id="parseBtn">Analizar preguntas ↗</button></div>
+          <div class="format-help"><strong>Formato recomendado:</strong> numera cada pregunta (1., 2., 3.) y escribe las opciones en líneas separadas como A), B), C), D). <b>No necesitas indicar las respuestas correctas.</b> Puedes pegar más preguntas que las seleccionadas: PLIEGO sorteará 20 o 30 para cada versión, según la configuración. Para lecturas compartidas usa rótulos como <b>LECTURA 1</b> o <b>TEXTO BASE</b>.</div>
+        </section>
+
+        <section class="card hidden" id="reviewSection">
+          <div class="card-head"><div><div class="step"><span class="step-num">03</span><h2>Revisión de preguntas</h2></div><p>Verifica que los enunciados y las cuatro opciones se hayan reconocido correctamente. No hace falta marcar respuestas correctas.</p></div><span class="q-number" id="reviewCount">0</span></div>
+          <div id="parseWarnings" class="warning hidden" style="margin-bottom:11px"></div>
+          <div id="bankInfo" class="warning success hidden" style="margin-bottom:11px"></div>
+          <div class="review-list" id="reviewList"></div>
+          <div class="paste-toolbar"><span class="small">Revisa el texto y las opciones; la mezcla se hará automáticamente al generar.</span><button class="btn btn-secondary btn-small" id="reparseBtn">Volver a analizar</button></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><div><div class="step"><span class="step-num">04</span><h2>Generación e impresión</h2></div><p>Define cuántas versiones y cómo se organizarán.</p></div></div>
+          <div class="controls-grid">
+            <div class="field"><label for="versionCount">Cantidad de versiones</label><input id="versionCount" type="number" min="1" max="20" value="5"></div>
+            <div class="field"><label for="questionCount">Preguntas por examen</label><select id="questionCount"><option value="20" selected>20 preguntas</option><option value="30">30 preguntas</option></select></div>
+            <div class="field"><label for="columns">Columnas</label><select id="columns"><option value="2" selected>Dos columnas</option><option value="1">Una columna</option></select></div>
+            <div class="field"><label for="fontMode">Tamaño de letra</label><select id="fontMode"><option value="auto" selected>Automático (recomendado)</option><option value="compact">Compacto</option><option value="normal">Normal</option><option value="large">Grande</option></select></div>
+            <div class="field"><label for="optionLayout">Opciones de respuesta</label><select id="optionLayout"><option value="2x2">Dos por fila</option><option value="list" selected>Una por fila</option></select></div>
+          </div>
+          <div style="margin-top:10px">
+            <div class="toggle-row"><div><strong>Mezclar el orden de las preguntas</strong><small>Las lecturas compartidas se mantienen junto a sus preguntas.</small></div><input class="switch" id="shuffleQuestions" type="checkbox" checked></div>
+            <div class="toggle-row"><div><strong>Mezclar las opciones A–D</strong><small>Se reorganizan libremente en cada versión. No necesitas indicar la respuesta correcta.</small></div><input class="switch" id="shuffleOptions" type="checkbox" checked></div>
+            <div class="toggle-row"><div><strong>Agregar tabla de respuestas QUIZ</strong><small>Se integra debajo de la última pregunta, en esa misma columna; no crea una página adicional.</small></div><input class="switch" id="includeQuiz" type="checkbox" checked></div>
+          </div>
+          <div id="quizWarning" class="warning hidden" style="margin-top:11px">El banco debe contener al menos la cantidad de preguntas seleccionada.</div>
+          <div style="display:flex;gap:8px;margin-top:15px"><button class="btn btn-primary" id="generateBtn" style="flex:1" disabled>Generar versiones</button></div>
+          <p class="small" style="margin:9px 0 0">La aplicación no reescribe los enunciados ni las opciones. Solo cambia su orden. No solicita ni necesita claves de respuesta.</p>
+        </section>
+      </aside>
+
+      <section class="content">
+        <div class="workspace">
+          <div class="workspace-head"><div class="workspace-title"><h2>Composición y vista previa</h2><p id="workspaceSub">Analiza el material base para comenzar.</p></div><div class="workspace-actions"><button class="btn btn-secondary" id="printAllBtn" disabled>▣ Guardar PDF · Todas</button><button class="btn btn-primary" id="printOneBtn" disabled>Imprimir versión</button></div></div>
+          <div id="emptyWorkspace" class="empty-workspace"><div><div class="empty-icon">▤</div><h3>Tu espacio de composición</h3><p>Primero pega el material y analiza las preguntas. Aquí aparecerán las versiones reorganizadas y maquetadas, listas para revisar e imprimir.</p></div></div>
+          <div id="generatedWorkspace" class="hidden">
+            <div class="metric-row"><div class="metric"><span>Preguntas en el banco</span><strong id="metricQuestions">0</strong></div><div class="metric"><span>Preguntas por examen</span><strong id="metricPerExam">20</strong></div><div class="metric"><span>Versiones</span><strong id="metricVersions">0</strong></div><div class="metric"><span>Páginas de examen</span><strong id="metricPages">0</strong></div></div>
+            <div class="preview-area"><div class="version-tabs" id="versionTabs"></div><div class="preview-help" id="previewHelp">Vista previa a escala. El documento impreso utiliza tamaño carta.</div><div class="paper-stack" id="previewStack"></div></div>
+            <div class="footnote" style="border-top:0">Cada versión incluye su propia tabla QUIZ en blanco, integrada bajo la última pregunta y dentro de la misma columna. PLIEGO no genera claves docentes: el contenido se limita a reorganizar preguntas y opciones.</div>
+            <div class="footnote">La tabla QUIZ no ocupa una página adicional: se ubica después de la última pregunta, en esa misma columna. Imprime en tamaño carta al 100 %, con el contenido gráfico habilitado. Revisa el primer ejemplar antes de reproducir el lote.</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="printRoot" class="hidden" aria-hidden="true"></div>
+  <div id="measureHost"></div>
+  <div class="toast" id="toast"></div>
+  <div class="modal-backdrop" id="confirmModal"><div class="modal"><h3 id="modalTitle">Confirmar</h3><p id="modalText"></p><div class="modal-actions"><button class="btn btn-ghost" id="modalCancel">Cancelar</button><button class="btn btn-primary" id="modalConfirm">Continuar</button></div></div></div>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORAGE_KEY = 'pliego_builder_v1';
+  const DEFAULT_QUESTION_COUNT = 20;
+  function questionCount(){return Number($('questionCount')?.value||DEFAULT_QUESTION_COUNT);}
+  const LETTER_WIDTH_IN = 8.5;
+  const LETTER_HEIGHT_IN = 11;
+  const state = { questions:[], versions:[], selectedVersion:0, logoData:'', parsed:false, generated:false, parsedWarnings:[], printMode:'all' };
+  const headerFields = ['institution','subject','grade','assessment','period','teacher','date','headerGroup','instructions'];
+  const random = (arr) => { const a = arr.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+  const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const cleanText = (s) => String(s ?? '').replace(/\r/g,'').replace(/[\t ]+$/gm,'').trim();
+  const formatText = (s) => escapeHtml(s).replace(/[\t ]*\n[\t ]*/g,' ');
+  function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),2800);}
+  function getHeader(){const o={};headerFields.forEach(id=>o[id]=$(id).value.trim());return o;}
+  function setHeader(h={}){headerFields.forEach(id=>{if(h[id]!==undefined)$(id).value=h[id];});}
+  function saveDraft(){try{const data={header:getHeader(),source:$('sourceText').value,questions:state.questions,preamble:state.preamble||[],versionCount:$('versionCount').value,questionCount:$('questionCount').value,columns:$('columns').value,fontMode:$('fontMode').value,optionLayout:$('optionLayout').value,shuffleQuestions:$('shuffleQuestions').checked,shuffleOptions:$('shuffleOptions').checked,includeQuiz:$('includeQuiz').checked,logoData:state.logoData};localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){/* local storage can be full; the app remains usable */}}
+  function restoreDraft(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;const d=JSON.parse(raw);setHeader(d.header||{});$('sourceText').value=d.source||'';$('versionCount').value=d.versionCount||5;$('questionCount').value=d.questionCount||20;$('columns').value=d.columns||2;$('fontMode').value=d.fontMode||'auto';$('optionLayout').value=d.optionLayout||'list';$('shuffleQuestions').checked=d.shuffleQuestions!==false;$('shuffleOptions').checked=d.shuffleOptions!==false;$('includeQuiz').checked=d.includeQuiz!==false;state.logoData=d.logoData||'';if(state.logoData)showLogo(state.logoData);if(Array.isArray(d.questions)&&d.questions.length){state.questions=d.questions;state.preamble=d.preamble||[];state.parsed=true;renderReview();updateButtons();}}catch(e){}}
+  function showLogo(data){const wrap=$('logoPreviewWrap');wrap.innerHTML=data?`<img class="logo-preview" alt="Logo" src="${data}">`:'<div class="logo-placeholder">＋</div>';}
+  function countSource(){const v=$('sourceText').value;$('sourceCount').textContent=`${v.length.toLocaleString('es-CO')} caracteres`+(v.trim()?` · ${v.split(/\n\s*\n/).filter(Boolean).length} bloques aprox.`:'');}
+  function parseQuestionStart(line){const m=line.match(/^\s*(?:PREGUNTA\s*)?(\d{1,3})\s*[.)\]:-]\s*(\S.*)$/i);return m?{number:Number(m[1]),text:m[2]}:null;}
+  function parseOption(line){const m=line.match(/^\s*(?:\(([A-D])\)|\[([A-D])\]|([A-D])[).:\-])\s*(\S.*)$/i);if(!m)return null;return{letter:(m[1]||m[2]||m[3]).toUpperCase(),text:m[4]};}
+  function isPassageHeading(line){return /^(?:LECTURA(?:\s*(?:BASE|COMPRENSIVA|\d+|N[º°]\s*\d+))?|TEXTO(?:\s*(?:BASE|\d+|N[º°]\s*\d+))?|FRAGMENTO|CONTEXTO|LEE\s+(?:EL|LA|LOS|LAS|EL\s+SIGUIENTE)|OBSERVA|ANALIZA\s+(?:EL|LA|LOS|LAS)|CASO\s+(?:CL[IÍ]NICO|BASE|\d+)|SITUACI[ÓO]N\s+(?:BASE|PROBLEMA)|GR[AÁ]FICA|TABLA|IMAGEN)\b/i.test(line.trim());}
+  function readKeyLine(line){const m=line.match(/^\s*(?:CLAVE(?:\s+DE\s+RESPUESTA)?|RESPUESTA(?:\s+CORRECTA)?|CORRECTA|SOLUCI[ÓO]N)\s*[:=\-]\s*([A-D])\b\s*$/i);return m?m[1].toUpperCase():null;}
+  function cleanMarkedOption(text){let t=text;let marked=false;const patterns=[/\s*\[(?:CORRECTA|RESPUESTA)\]\s*$/i,/\s*\((?:CORRECTA|RESPUESTA)\)\s*$/i,/\s*(?:✓|✔|✅)\s*$/u,/^\s*\*\s*/];for(const p of patterns){if(p.test(t)){marked=true;t=t.replace(p,'').trim();}}return{text:t,marked};}
+  function parseMaterial(raw){
+    const lines=cleanText(raw).split('\n').map(x=>x.trim()).filter(Boolean);
+    const questions=[];const warnings=[];let current=null;let activeContext='';let activeGroup='';let groupCounter=0;let preFirst=[];let beforeFirst=true;let preamble=[];
+    function flush(){if(current){current.stem=current.stem.trim();current.options=current.options.filter(o=>o.text.trim());if(current.stem||current.options.length)questions.push(current);current=null;}}
+    for(const line of lines){
+      const qStart=parseQuestionStart(line);
+      if(qStart){
+        flush();
+        let contextForQuestion=activeContext;
+        if(beforeFirst){
+          const pre=preFirst.join('\n');
+          const combined=[activeContext,pre].filter(Boolean).join('\n');
+          const looksLikeReading=!!activeGroup||pre.length>135||/lee el siguiente|responde las preguntas|lectura|texto base|fragmento/i.test(pre);
+          if(looksLikeReading)contextForQuestion=combined;
+          else if(pre) preamble.push(pre);
+          preFirst=[];
+        }
+        beforeFirst=false;if(!activeGroup)activeGroup=`g${++groupCounter}`;
+        current={id:`q${questions.length+1}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,sourceNumber:Number(qStart.number),stem:qStart.text,options:[],context:contextForQuestion,groupId:activeGroup};continue;
+      }
+      if(isPassageHeading(line)){
+        flush();activeContext=line;activeGroup=`g${++groupCounter}`;continue;
+      }
+      const option=parseOption(line);
+      if(option){
+        if(!current){warnings.push(`Se encontró la opción ${option.letter} sin una pregunta anterior.`);continue;}
+        const marked=cleanMarkedOption(option.text);current.options.push({uid:option.letter,text:marked.text});continue;
+      }
+      const key=readKeyLine(line);
+      if(key&&current){continue;}
+      if(current){
+        if(current.options.length===0)current.stem+=(current.stem?'\n':'')+line;
+        else current.stem+='\n'+line;
+      }else if(beforeFirst){preFirst.push(line);}
+      else{
+        activeContext+=(activeContext?'\n':'')+line;
+        if(!activeGroup)activeGroup=`g${++groupCounter}`;
+      }
+    }
+    flush();
+    if(beforeFirst&&preFirst.length)preamble.push(preFirst.join('\n'));
+    questions.forEach((q,i)=>{
+      q.sourceNumber=q.sourceNumber||i+1;
+      const order=['A','B','C','D'];q.options.sort((a,b)=>order.indexOf(a.uid)-order.indexOf(b.uid));
+      if(new Set(q.options.map(o=>o.uid)).size!==q.options.length)warnings.push(`La pregunta ${q.sourceNumber} tiene letras de opción repetidas.`);
+      if(q.options.length!==4)warnings.push(`La pregunta ${q.sourceNumber} tiene ${q.options.length} opciones; se esperaban cuatro (A–D).`);
+    });
+    if(!questions.length)warnings.push('No se identificaron preguntas numeradas. Comprueba que cada enunciado comience con 1., 2., 3., etc.');
+    return{questions,preamble,warnings};
+  }
+  function renderReview(){
+    const list=$('reviewList');list.innerHTML='';
+    state.questions.forEach((q,i)=>{
+      const card=document.createElement('div');card.className='q-review';
+      const letters=['A','B','C','D'];
+      const optionsHtml=letters.map((l,j)=>{const o=q.options.find(x=>x.uid===l);return`<div class="option-edit"><b>${l}.</b><input data-q="${i}" data-option="${j}" value="${escapeHtml(o?.text||'')}" placeholder="Opción ${l}"></div>`;}).join('');
+      card.innerHTML=`<div class="q-review-top"><span class="q-number">PREGUNTA ${String(i+1).padStart(2,'0')} · BASE ${q.sourceNumber}</span><span class="small">${q.context?'Lectura compartida':'Pregunta independiente'}</span></div><textarea data-q="${i}" data-stem="1" aria-label="Enunciado">${escapeHtml(q.stem)}</textarea><div class="options-edit">${optionsHtml}</div>`;
+      list.appendChild(card);
+    });
+    list.querySelectorAll('textarea[data-stem]').forEach(el=>el.addEventListener('input',()=>{state.questions[+el.dataset.q].stem=el.value;invalidateGenerated();saveDraft();}));
+    list.querySelectorAll('input[data-option]').forEach(el=>el.addEventListener('input',()=>{const q=state.questions[+el.dataset.q],uid=['A','B','C','D'][+el.dataset.option];let option=q.options.find(o=>o.uid===uid);if(!option){option={uid,text:''};q.options.push(option);}option.text=el.value;q.options.sort((a,b)=>'ABCD'.indexOf(a.uid)-'ABCD'.indexOf(b.uid));invalidateGenerated();saveDraft();}));
+    $('reviewCount').textContent=String(state.questions.length);
+    $('reviewSection').classList.toggle('hidden',!state.questions.length);
+    updateQuizWarning();
+  }
+  function updateMixMetric(){const metric=$('metricShuffle');if(metric)metric.textContent=$('shuffleOptions').checked?'Activa':'No';}
+  function setWarnings(warnings){const el=$('parseWarnings');if(warnings.length){el.textContent=warnings.join(' ');el.classList.remove('hidden');}else{el.classList.add('hidden');}}
+  function validateBeforeGenerate(){
+    const questions=state.questions;
+    if(!questions.length)return'Primero analiza el material base.';
+    if(questions.length<questionCount())return`El banco contiene ${questions.length} preguntas. Se necesitan al menos ${questionCount()}; PLIEGO sorteará esa cantidad para cada versión.`;
+    if(questions.some(q=>!q.stem.trim()))return'Hay preguntas sin enunciado. Completa todos los enunciados antes de continuar.';
+    if(questions.some(q=>q.options.length!==4||new Set(q.options.map(o=>o.uid)).size!==4||!['A','B','C','D'].every(l=>q.options.some(o=>o.uid===l))||q.options.some(o=>!o.text.trim())))return'Todas las preguntas deben tener cuatro opciones A–D completas, sin letras repetidas.';
+    const count=Number($('versionCount').value);if(!Number.isInteger(count)||count<1||count>20)return'La cantidad de versiones debe estar entre 1 y 20.';if(count>1&&!$('shuffleQuestions').checked&&!$('shuffleOptions').checked)return'Activa al menos una mezcla para que las versiones sean realmente diferentes.';
+    return'';
+  }
+  function invalidateGenerated(){state.generated=false;state.versions=[];$('generatedWorkspace').classList.add('hidden');$('emptyWorkspace').classList.remove('hidden');$('printAllBtn').disabled=true;$('printOneBtn').disabled=true;$('generateBtn').disabled=state.questions.length<questionCount();updateQuizWarning();}
+  function updateQuizWarning(){const count=questionCount();const insufficient=state.questions.length>0&&state.questions.length<count;$('quizWarning').textContent=insufficient?`El banco tiene ${state.questions.length} preguntas. Añade ${count-state.questions.length} más para generar exámenes de ${count} preguntas.`:'';$('quizWarning').classList.toggle('hidden',!insufficient);const info=$('bankInfo');if(info){const enough=state.questions.length>=count;info.textContent=enough?`Banco de ${state.questions.length} preguntas: PLIEGO sorteará ${count} para cada versión. Cada examen tendrá su propio sorteo; las preguntas seleccionadas pueden variar entre versiones.`:'';info.classList.toggle('hidden',!enough);}}
+  function updateButtons(){const ok=state.questions.length>=questionCount();$('generateBtn').disabled=!ok;updateQuizWarning();updateMixMetric();}
+  function parseAndReview(){const raw=$('sourceText').value;if(!raw.trim()){toast('Pega primero el material de preguntas.');return;}const parsed=parseMaterial(raw);state.questions=parsed.questions;state.parsedWarnings=parsed.warnings;state.parsed=true;state.preamble=parsed.preamble||[];setWarnings(parsed.warnings);renderReview();updateButtons();invalidateGenerated();saveDraft();if(parsed.questions.length)toast(`Se identificaron ${parsed.questions.length} preguntas.`);else toast('No se identificaron preguntas. Revisa el formato.');}
+  function groupQuestions(list,shuffleQ){
+    const groups=[];const by=new Map();list.forEach(q=>{const id=q.groupId||`single_${q.id}`;if(!by.has(id)){const g={id,context:q.context||'',questions:[]};by.set(id,g);groups.push(g);}by.get(id).questions.push({...q,options:q.options.map(o=>({...o}))});});
+    return groups.flatMap(g=>{const qs=shuffleQ?random(g.questions):g.questions;return[{...g,questions:qs}];});
+  }
+  function createVersion(index){
+    const label=String.fromCharCode(65+index);
+    // Draw a fresh, independent sample of the configured question count for this version.
+    // Keep the selected items in source order when question shuffling is disabled.
+    const targetCount=questionCount();
+    const drawn=random(state.questions).slice(0,targetCount);
+    const selectedIds=new Set(drawn.map(q=>q.id));
+    const selected=$('shuffleQuestions').checked?drawn:state.questions.filter(q=>selectedIds.has(q.id));
+    let groups=groupQuestions(selected,$('shuffleQuestions').checked);
+    if($('shuffleQuestions').checked)groups=random(groups);
+    const ordered=[];groups.forEach(g=>g.questions.forEach(q=>{let opts=q.options.map(o=>({...o}));if($('shuffleOptions').checked)opts=random(opts);ordered.push({...q,options:opts});}));
+    return{label,index,groups,questions:ordered,bankCount:state.questions.length,selectedCount:ordered.length};
+  }
+  function buildBlocks(version){
+    const blocks=[];let number=0;
+    (state.preamble||[]).forEach(text=>blocks.push({type:'context',text,label:'INDICACIÓN GENERAL'}));
+    version.groups.forEach(group=>{
+      if(group.context){blocks.push({type:'context',text:group.context,groupId:group.id,label:'LECTURA / CONTEXTO'});}
+      group.questions.forEach(q=>{number++;const qv=version.questions.find(x=>x.id===q.id);const obj=qv||q;blocks.push({type:'question',number,question:obj,groupId:group.id});});
+    });
+    // Attach the answer table to the final question so pagination keeps it in that same column.
+    if($('includeQuiz').checked){const lastQuestion=[...blocks].reverse().find(b=>b.type==='question');if(lastQuestion)lastQuestion.appendQuiz=true;}
+    return blocks;
+  }
+  function renderQuizInlineTable(){
+    const count=questionCount();
+    const is20=count===20;
+    const src=is20?'./assets/QUIZ-20-lengua-castellana-recuperacion-10.svg':'./assets/QUIZ-30-lengua-castellana-recuperacion-10.svg';
+    const height=is20?1312:1700;
+    // Use the exact SVG artwork supplied by the user and used by the QUIZ OMR reader.
+    // Its original viewBox and fiducial/bubble coordinates must never be redrawn or cropped.
+    return `<div class="quiz-exact-wrap measure-block" aria-label="Hoja original QUIZ de ${count} preguntas"><img class="quiz-exact-svg" src="${src}" width="1199" height="${height}" alt="Hoja óptica QUIZ original de ${count} preguntas" loading="eager" decoding="sync"></div>`;
+  }
+  function renderBlock(block){
+    if(block.type==='context')return`<div class="context-block measure-block"><div class="context-label">${escapeHtml(block.label)}</div>${formatText(block.text)}</div>`;
+    const q=block.question;const options=q.options.map((o,i)=>`<div class="q-option"><b>${'ABCD'[i]})</b><span>${formatText(o.text)}</span></div>`).join('');
+    const quiz=block.appendQuiz?renderQuizInlineTable():'';
+    return`<article class="q-block measure-block"><div class="q-head"><span class="q-no">${block.number}.</span><div class="q-stem">${formatText(q.stem)}</div></div><div class="q-options ${$('optionLayout').value==='list'?'list':''}">${options}</div>${quiz}</article>`;
+  }
+  function pageHeader(version,pageNo,header){
+    if(pageNo===0){const logo=state.logoData?`<img class="paper-logo" src="${state.logoData}" alt="">`:'';const subtitle=[header.subject,header.grade?`Grado ${header.grade}`:'',header.period].filter(Boolean).join('  |  ');const metadata=[header.teacher?`Docente: ${escapeHtml(header.teacher)}`:'',header.date?`Fecha: ${escapeHtml(header.date)}`:''].filter(Boolean).join('  ·  ');return`<header class="paper-header">${logo}<div class="paper-title"><div class="paper-institution">${escapeHtml(header.institution||'Institución educativa')}</div><div class="paper-assessment">${escapeHtml(header.assessment||'Evaluación')}</div><div class="paper-subtitle">${escapeHtml(subtitle)}${metadata?`<span>${metadata}</span>`:''}</div></div><div class="paper-version">VERSIÓN<br>${version.label}</div></header><div class="student-fields"><div>Estudiante: <span></span></div><div>Grupo: <span>${escapeHtml(header.headerGroup||'')}</span></div><div>Fecha: <span></span></div></div>${header.instructions?`<p class="paper-instructions"><b>INSTRUCCIONES.</b> ${escapeHtml(header.instructions)}</p>`:''}`;}
+    return`<div class="compact-header"><span>${escapeHtml(header.institution||'Institución educativa')} · ${escapeHtml(header.assessment||'Evaluación')}</span><small>VERSIÓN ${version.label} · CONTINUACIÓN ${pageNo+1}</small></div>`;
+  }
+  function measureAndPaginate(blocks,version,header,fontSize,columns){
+    const host=$('measureHost');host.innerHTML='';host.style.width=columns===2?'3.69in':'7.64in';host.style.setProperty('--qfont',fontSize+'pt');host.style.setProperty('--lineheight','1.16');
+    blocks.forEach(b=>{const wrap=document.createElement('div');wrap.innerHTML=renderBlock(b);const node=wrap.firstElementChild;node.style.fontSize='var(--qfont)';host.appendChild(node);b._height=node.getBoundingClientRect().height+0.5;});
+    const pageUsable=(pageNo)=>{
+      const headerHeight=pageNo===0?(state.logoData?86:78):34;
+      const student=pageNo===0?30:0;
+      const instructions=pageNo===0&&header.instructions?38:0;
+      const topBottom=0.73*96;
+      return 11*96-topBottom-headerHeight-student-instructions-30;
+    };
+    const maxPages=[];let start=0;let pageNo=0;
+    while(start<blocks.length){
+      const cap=pageUsable(pageNo);let bestEnd=start;let bestSplit=start;let bestDiff=Infinity;let total=0;
+      const sums=[0];for(let i=start;i<blocks.length;i++)sums.push(sums[sums.length-1]+blocks[i]._height);
+      const feasible=[];
+      for(let end=start+1;end<=blocks.length;end++){
+        total=sums[end-start];if(columns===1){if(total<=cap)bestEnd=end;else break;continue;}
+        if(total>2*cap+1)break;
+        let local=null;
+        for(let split=start+1;split<end;split++){
+          const left=sums[split-start],right=total-left;
+          if(left<=cap+1&&right<=cap+1){const diff=Math.abs(left-right);if(!local||diff<local.diff)local={split,diff};}
+        }
+        if(end===start+1&&sums[end-start]<=cap+1)local={split:end,diff:0};
+        if(local){bestEnd=end;bestSplit=local.split;bestDiff=local.diff;feasible.push({end,...local});}
+      }
+      if(columns===1){if(bestEnd===start)bestEnd=start+1;maxPages.push({blocks:blocks.slice(start,bestEnd),split:bestEnd});start=bestEnd;}
+      else{
+        const chosen=feasible[feasible.length-1];
+        if(chosen){bestEnd=chosen.end;bestSplit=chosen.split;let choice=chosen;for(let ix=feasible.length-1;ix>=0;ix--){const f=feasible[ix];if(f.end===bestEnd&&f.diff<choice.diff)choice=f;}bestSplit=choice.split;}
+        if(bestEnd===start){bestEnd=start+1;bestSplit=start+1;}
+        maxPages.push({blocks:blocks.slice(start,bestEnd),split:bestSplit-start});start=bestEnd;
+      }
+      pageNo++;if(pageNo>100)break;
+    }
+    return maxPages;
+  }
+  function paginateBest(version,header){
+    const blocks=buildBlocks(version);const columns=Number($('columns').value);let candidates;
+    const mode=$('fontMode').value;
+    if(mode==='compact')candidates=[8,8.4,8.8,9.2];else if(mode==='normal')candidates=[9,9.4,9.8,10.2,10.6];else if(mode==='large')candidates=[10,10.5,11,11.5,12];else candidates=[8.2,8.6,9,9.4,9.8,10.2,10.6,11,11.4,11.8,12.2];
+    let best=null;for(const fs of candidates){const pages=measureAndPaginate(blocks,version,header,fs,columns);const score=pages.length*1000-fs;if(!best||score<best.score)best={pages,fontSize:fs,score};}
+    version.pageCount=best.pages.length;version.fontSize=best.fontSize;version.columns=columns;return best.pages;
+  }
+  function renderVersionPages(version){
+    const header=getHeader();const pages=paginateBest(version,header);const colCount=Number($('columns').value);const pageMarkup=[];
+    pages.forEach((page,i)=>{
+      let columnsHtml='';if(colCount===1){columnsHtml=`<div class="paper-columns" style="grid-template-columns:1fr"><div class="paper-column">${page.blocks.map(renderBlock).join('')}</div></div>`;}else{const split=page.split;const left=page.blocks.slice(0,split),right=page.blocks.slice(split);columnsHtml=`<div class="paper-columns"><div class="paper-column">${left.map(renderBlock).join('')}</div><div class="paper-column">${right.map(renderBlock).join('')}</div></div>`;}
+      pageMarkup.push(`<section class="print-page exam-page" style="--qfont:${version.fontSize}pt;--lineheight:1.16">${pageHeader(version,i,header)}${columnsHtml}<div class="paper-footer">${escapeHtml(header.subject||'Evaluación')} · Versión ${version.label} · Página ${i+1} de ${pages.length}</div></section>`);
+    });
+    version.pagesHtml=pageMarkup;return pageMarkup;
+  }
+  function selectVersion(index){state.selectedVersion=index;document.querySelectorAll('.version-tab').forEach((el,i)=>el.classList.toggle('active',i===index));const v=state.versions[index];if(!v)return;$('previewStack').innerHTML=v.pagesHtml.join('');$('previewHelp').textContent=`Versión ${v.label} · ${v.pageCount} página(s) · ${questionCount()} preguntas${$('includeQuiz').checked?' · tabla QUIZ integrada al final de la columna':''} · Letra ${v.fontSize} pt · Papel carta.`;fitPreview();}
+  function fitPreview(){const stack=$('previewStack');if(!stack)return;const available=Math.min(stack.clientWidth,816);const scale=Math.min(1,available/(8.5*96));stack.querySelectorAll('.print-page').forEach(p=>{p.style.transform=`scale(${scale})`;p.style.transformOrigin='top center';p.style.marginBottom=`${-11*96*(1-scale)}px`;});}
+  function generate(){
+    const err=validateBeforeGenerate();if(err){toast(err);return;}
+    const count=Number($('versionCount').value);state.versions=[];const signatures=new Set();for(let i=0;i<count;i++){let v=null;for(let attempt=0;attempt<80;attempt++){const candidate=createVersion(i);const signature=candidate.questions.map(q=>q.id+':'+q.options.map(o=>o.uid).join('')).join('|');if(!signatures.has(signature)||attempt===79){v=candidate;signatures.add(signature);break;}}renderVersionPages(v);state.versions.push(v);}state.generated=true;state.selectedVersion=0;
+    $('emptyWorkspace').classList.add('hidden');$('generatedWorkspace').classList.remove('hidden');$('printAllBtn').disabled=false;$('printOneBtn').disabled=false;
+    $('metricQuestions').textContent=state.questions.length;$('metricPerExam').textContent=questionCount();$('metricVersions').textContent=state.versions.length;$('metricPages').textContent=state.versions.reduce((n,v)=>n+v.pageCount,0);updateMixMetric();
+    $('versionTabs').innerHTML=state.versions.map((v,i)=>`<button class="version-tab ${i===0?'active':''}" data-version="${i}">VERSIÓN ${v.label}</button>`).join('');$('versionTabs').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>selectVersion(+b.dataset.version)));
+    selectVersion(0);$('workspaceSub').textContent=`${count} versiones generadas · ${questionCount()} preguntas por examen · banco de ${state.questions.length}.`;toast(`Se generaron ${count} versiones de ${questionCount()} preguntas.`);saveDraft();
+  }
+  function preparePrint(mode){if(!state.generated){toast('Genera las versiones antes de imprimir.');return;}const root=$('printRoot');root.className='';root.innerHTML='';let html='';if(mode==='all'){state.versions.forEach(v=>html+=v.pagesHtml.join(''));}else{const v=state.versions[state.selectedVersion];html=v.pagesHtml.join('');}root.innerHTML=html;root.classList.remove('hidden');root.classList.remove('keys-print');window.print();setTimeout(()=>{root.innerHTML='';root.classList.add('hidden');},1200);}
+  function showConfirm(title,text,action){$('modalTitle').textContent=title;$('modalText').textContent=text;$('confirmModal').classList.add('open');$('modalConfirm').onclick=()=>{$('confirmModal').classList.remove('open');action();};$('modalCancel').onclick=()=>$('confirmModal').classList.remove('open');}
+  function newProject(){showConfirm('Crear un proyecto nuevo','Se borrará el material y las versiones generadas de esta sesión. El encabezado puede volver a configurarse.',()=>{state.questions=[];state.versions=[];state.parsed=false;state.generated=false;state.logoData='';$('sourceText').value='';$('reviewSection').classList.add('hidden');$('bankInfo').classList.add('hidden');$('quizWarning').classList.add('hidden');$('generatedWorkspace').classList.add('hidden');$('emptyWorkspace').classList.remove('hidden');$('printAllBtn').disabled=true;$('printOneBtn').disabled=true;$('generateBtn').disabled=true;showLogo('');localStorage.removeItem(STORAGE_KEY);countSource();toast('Proyecto nuevo listo.');});}
+  function printModeKeyListener(){window.addEventListener('afterprint',()=>{const root=$('printRoot');root.innerHTML='';root.className='hidden';});}
+  // Events
+  $('sourceText').addEventListener('input',()=>{countSource();state.questions=[];state.preamble=[];state.parsed=false;$('reviewSection').classList.add('hidden');$('parseWarnings').classList.add('hidden');$('bankInfo').classList.add('hidden');invalidateGenerated();updateButtons();saveDraft();});
+  headerFields.forEach(id=>$(id).addEventListener('input',()=>{saveDraft();if(state.generated){invalidateGenerated();}}));
+  ['versionCount','questionCount','columns','fontMode','optionLayout','shuffleQuestions','shuffleOptions','includeQuiz'].forEach(id=>$(id).addEventListener('change',()=>{saveDraft();invalidateGenerated();updateButtons();updateMixMetric();}));
+  $('parseBtn').addEventListener('click',parseAndReview);$('reparseBtn').addEventListener('click',parseAndReview);$('generateBtn').addEventListener('click',generate);$('printAllBtn').addEventListener('click',()=>preparePrint('all'));$('printOneBtn').addEventListener('click',()=>preparePrint('one'));$('resetBtn').addEventListener('click',newProject);
+  $('logoFile').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>2*1024*1024){toast('El logo no debe superar 2 MB.');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{state.logoData=reader.result;showLogo(state.logoData);saveDraft();if(state.generated)invalidateGenerated();};reader.readAsDataURL(f);});
+  $('removeLogo').addEventListener('click',()=>{state.logoData='';$('logoFile').value='';showLogo('');saveDraft();if(state.generated)invalidateGenerated();});
+  window.addEventListener('resize',fitPreview);printModeKeyListener();
+  restoreDraft();countSource();updateButtons();
+  if('serviceWorker' in navigator && location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+})();
+</script>
+</body>
+</html>

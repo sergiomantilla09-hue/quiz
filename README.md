@@ -48,3 +48,13 @@ La lectura automática debe validarse con tarjetas físicas reales antes de regi
 ## Privacidad
 
 Las fotografías se procesan en el navegador y no se envían a un servidor. Los resultados se guardan localmente en el dispositivo. La aplicación publicada es pública, pero no almacena los registros de los estudiantes en GitHub.
+
+## PLIEGO · Generador de exámenes
+
+PLIEGO vive en la subcarpeta `/pliego/` y complementa al lector óptico QUIZ sin reemplazar sus archivos ni alterar sus coordenadas.
+
+- Aplicación: https://sergiomantilla09-hue.github.io/quiz/pliego/
+- Carpeta del proyecto: [`/pliego`](./pliego/)
+- Documentación para integración futura con SIGA: [`pliego/docs/INTEGRACION_SIGA.md`](./pliego/docs/INTEGRACION_SIGA.md)
+
+PLIEGO prepara versiones aleatorias de exámenes, compone la impresión en columnas, justifica el texto e integra la tarjeta SVG original de QUIZ al final del contenido, en la misma columna. Los bancos y borradores se procesan localmente en el navegador. La integración con SIGA todavía no está conectada; su arquitectura y criterios están documentados en el subproyecto.

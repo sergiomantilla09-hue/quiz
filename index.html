@@ -49,7 +49,7 @@
             <div><div class="section-kicker">CÁMARA EN VIVO</div><strong>Encuadra la tarjeta</strong></div>
             <button id="closeLiveScannerBtn" class="text-btn">Cerrar cámara ✕</button>
           </div>
-          <p class="live-instruction">Alinea los cuatro cuadrados negros de la tarjeta con las guías de las esquinas.</p>
+          <p class="live-instruction">Alinea los cuatro cuadrados negros y mantén la hoja quieta. QUIZ comprobará cinco tomas antes de aceptar las respuestas.</p>
           <div id="liveViewfinder" class="live-viewfinder">
             <video id="liveVideo" autoplay muted playsinline></video>
             <div id="liveGuide" class="live-guide">
@@ -60,7 +60,7 @@
             <div id="liveLockBadge" class="live-lock-badge">Buscando los 4 marcadores</div>
           </div>
           <div id="liveStatus" class="live-status" role="status" aria-live="polite">Coloca la tarjeta completa dentro del encuadre.</div>
-          <p class="live-footnote">La captura y la calificación se realizan automáticamente al reconocer los cuatro marcadores.</p>
+          <p class="live-footnote">Se comparan cinco imágenes consecutivas. Si una respuesta cambia entre tomas, QUIZ la deja pendiente para revisión en lugar de adivinarla.</p>
         </section>
 
 
@@ -129,6 +129,12 @@
               <div class="score-meta"><span id="correctCount">0 correctas</span><i></i><span id="invalidCount">0 por revisar</span></div>
             </div>
           </div>
+          <div class="answer-photo-card">
+            <div class="answer-photo-heading"><div><h3>Lectura sobre la tarjeta</h3><p>La imagen muestra dónde se detectaron aciertos, errores y marcas que requieren revisión.</p></div>
+              <div class="answer-photo-legend"><span><i class="legend-correct"></i>Acierto</span><span><i class="legend-wrong"></i>Error</span><span><i class="legend-review"></i>Revisar</span></div>
+            </div>
+            <div class="answer-photo-viewport"><canvas id="answerPhotoCanvas" aria-label="Fotografía de la tarjeta con aciertos y errores resaltados"></canvas></div>
+          </div>
           <div class="answer-review-head">
             <div><h3>Respuestas detectadas</h3><p>Corrige aquí cualquier lectura dudosa.</p></div>
             <button id="regradeBtn" class="small-action">Actualizar nota</button>
@@ -183,44 +189,35 @@
               <input id="sheetArea" type="text" maxlength="38" value="Lengua Castellana" placeholder="Ej. Matemáticas">
             </label>
             <label class="field">
-              <span>Grado</span>
-              <select id="sheetGrade">
-                <option value="1.º">1.º</option><option value="2.º">2.º</option><option value="3.º">3.º</option>
-                <option value="4.º">4.º</option><option value="5.º">5.º</option><option value="6.º">6.º</option>
-                <option value="7.º">7.º</option><option value="8.º">8.º</option><option value="9.º">9.º</option>
-                <option value="10.º" selected>10.º</option><option value="11.º">11.º</option>
-              </select>
+              <span>Grado / grupo</span>
+              <input id="sheetGrade" type="text" maxlength="24" value="10.º" placeholder="Ej. 10.º o 10-02">
             </label>
             <label class="field field-wide">
-              <span>Tipo de evaluación</span>
-              <select id="sheetEvaluationType">
-                <option value="Recuperación" selected>Recuperación</option>
-                <option value="Evaluación 1">Evaluación 1</option>
-                <option value="Evaluación 2">Evaluación 2</option>
-                <option value="Nivelación">Nivelación</option>
-                <option value="custom">Otra denominación…</option>
-              </select>
-            </label>
-            <label id="sheetCustomLabelField" class="field field-wide" hidden>
-              <span>Escribe el nombre de la evaluación</span>
-              <input id="sheetCustomLabel" type="text" maxlength="18" placeholder="Ej. Plan de apoyo">
+              <span>Nombre</span>
+              <input id="sheetName" type="text" maxlength="36" value="Recuperación" placeholder="Ej. Recuperación tercer periodo">
             </label>
           </div>
-          <div class="sheet-preview">
-            <div class="sheet-preview-kicker">VISTA PREVIA DEL ENCABEZADO</div>
-            <div class="sheet-preview-title">Hoja de respuestas</div>
-            <div class="sheet-preview-meta">
-              <span id="sheetPreviewType">Recuperación</span>
-              <strong id="sheetPreviewSubject">Lengua Castellana · Grado 10.º</strong>
+          <div class="sheet-preview sheet-preview-full">
+            <div class="sheet-preview-kicker">VISTA PREVIA COMPLETA · IGUAL A LA DESCARGA</div>
+            <img id="sheetPreviewImage" alt="Vista previa completa de la hoja de respuestas QUIZ" loading="lazy">
+          </div>
+          <div class="sheet-presets">
+            <div class="sheet-download-heading"><strong>Configuraciones guardadas</strong><small>Recupera una evaluación con su formato y clave.</small></div>
+            <label class="field"><span>Nombre de la configuración</span><input id="sheetPresetName" type="text" maxlength="50" placeholder="Ej. Matemáticas · 10-02 · Parcial 1"></label>
+            <div class="sheet-preset-controls">
+              <button id="saveSheetPresetBtn" type="button" class="small-action">Guardar configuración actual</button>
+              <select id="sheetPresetSelect" aria-label="Configuraciones guardadas"><option value="">Selecciona una configuración guardada</option></select>
+              <button id="loadSheetPresetBtn" type="button" class="small-action">Cargar</button>
+              <button id="deleteSheetPresetBtn" type="button" class="small-action">Eliminar</button>
             </div>
-            <div class="sheet-preview-brand"><img src="assets/quiz-mark.svg" alt=""> <span>QUIZ</span><small id="sheetPreviewCount">30 PREGUNTAS</small></div>
           </div>
-          <a id="templateLink" class="sheet-download-btn" href="assets/plantilla_quiz_30.svg" download="Tarjeta_Respuestas_QUIZ-R30-MOBILE-V1.svg">
-            <span class="sheet-download-icon">↓</span>
-            <span><strong>Descargar hoja personalizada</strong><small id="sheetDownloadMeta">QUIZ · 30 preguntas · SVG listo para imprimir</small></span>
-            <span class="sheet-download-arrow">→</span>
-          </a>
-          <p class="sheet-editor-footnote">La descarga genera una hoja nueva con estos datos. No modifica la plantilla base ni las marcas que utiliza el lector.</p>
+          <div class="sheet-download-heading"><strong>Descargar hoja personalizada</strong><small id="sheetDownloadMeta">QUIZ · 30 preguntas · PNG, JPG y SVG</small></div>
+          <div class="sheet-download-options" role="group" aria-label="Formato de descarga">
+            <button id="downloadPngBtn" type="button" class="sheet-format-btn"><strong>PNG</strong><small>Alta calidad</small></button>
+            <button id="downloadJpgBtn" type="button" class="sheet-format-btn"><strong>JPG</strong><small>Fondo blanco</small></button>
+            <button id="downloadSvgBtn" type="button" class="sheet-format-btn"><strong>SVG</strong><small>Vectorial</small></button>
+          </div>
+          <p class="sheet-editor-footnote">PNG y JPG se generan a doble resolución y conservan la hoja completa. La geometría de las burbujas y los marcadores permanece intacta en los tres formatos.</p>
         </div>
         <div class="key-explainer"><span class="key-icon">✓</span><div><strong>Define la respuesta correcta.</strong><p>Selecciona A, B, C o D para cada pregunta. La clave queda guardada en este dispositivo.</p></div></div>
         <label class="field key-title-field"><span>Nombre de la evaluación</span><input id="keyAssessment" type="text" maxlength="70" placeholder="Nombre de la prueba"></label>

@@ -42,14 +42,9 @@ let ROWS_PER_COLUMN = 15;
 let POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
 let TEMPLATE = TEMPLATES[30];
 const DEFAULT_ASSESSMENT = 'Recuperación Lengua Castellana · Grado 10.º';
-const DEFAULT_SHEET_SETTINGS = {
-  area: 'Lengua Castellana',
-  grade: '10.º',
-  evaluationType: 'Recuperación',
-  customLabel: ''
-};
-const SHEET_GRADES = ['1.º','2.º','3.º','4.º','5.º','6.º','7.º','8.º','9.º','10.º','11.º'];
-const SHEET_EVALUATION_TYPES = ['Recuperación','Evaluación 1','Evaluación 2','Nivelación'];
+const DEFAULT_SHEET_SETTINGS = { area: 'Lengua Castellana', grade: '10.º', name: 'Recuperación' };
+const LIVE_CAPTURE_FRAME_COUNT = 5;
+const LIVE_CAPTURE_INTERVAL_MS = 180;
 
 const $ = (id) => document.getElementById(id);
 const ui = {
@@ -58,12 +53,16 @@ const ui = {
   installBtn: $('installBtn'),
   scanAssessment: $('scanAssessment'), studentName: $('studentName'), studentCourse: $('studentCourse'), studentId: $('studentId'),
   quizType20: $('quizType20'), quizType30: $('quizType30'), keyQuestionCount: $('keyQuestionCount'),
-  keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), templateLink: $('templateLink'), scanCardCount: $('scanCardCount'),
+  keyLeftLabel: $('keyLeftLabel'), keyRightLabel: $('keyRightLabel'), scanCardCount: $('scanCardCount'),
   processBtn: $('processBtn'),
-  sheetArea: $('sheetArea'), sheetGrade: $('sheetGrade'), sheetEvaluationType: $('sheetEvaluationType'),
-  sheetCustomLabelField: $('sheetCustomLabelField'), sheetCustomLabel: $('sheetCustomLabel'),
+  sheetArea: $('sheetArea'), sheetGrade: $('sheetGrade'), sheetName: $('sheetName'),
+  sheetPresetName: $('sheetPresetName'), sheetPresetSelect: $('sheetPresetSelect'), saveSheetPresetBtn: $('saveSheetPresetBtn'),
+  loadSheetPresetBtn: $('loadSheetPresetBtn'), deleteSheetPresetBtn: $('deleteSheetPresetBtn'),
+  sheetPreviewImage: $('sheetPreviewImage'),
+  downloadPngBtn: $('downloadPngBtn'), downloadJpgBtn: $('downloadJpgBtn'), downloadSvgBtn: $('downloadSvgBtn'),
   sheetPreviewType: $('sheetPreviewType'), sheetPreviewSubject: $('sheetPreviewSubject'),
   sheetPreviewCount: $('sheetPreviewCount'), sheetDownloadMeta: $('sheetDownloadMeta'),
+  answerPhotoCanvas: $('answerPhotoCanvas'),
   cameraBtn: $('cameraBtn'), galleryBtn: $('galleryBtn'), cameraInput: $('cameraInput'), galleryInput: $('galleryInput'),
   imageStage: $('imageStage'), imageFileName: $('imageFileName'), photoPreview: $('photoPreview'), processBtn: $('processBtn'), removeImage: $('removeImage'),
   scanMessage: $('scanMessage'), resultPanel: $('resultPanel'), resultStudent: $('resultStudent'), resultAssessment: $('resultAssessment'), reviewBadge: $('reviewBadge'),
@@ -87,12 +86,10 @@ function normalizeKey(values, count) {
 function normalizeSheetSettings(value) {
   const source = value && typeof value === 'object' ? value : {};
   const area = typeof source.area === 'string' ? source.area.trim().slice(0, 38) : DEFAULT_SHEET_SETTINGS.area;
-  const grade = SHEET_GRADES.includes(source.grade) ? source.grade : DEFAULT_SHEET_SETTINGS.grade;
-  const evaluationType = [...SHEET_EVALUATION_TYPES, 'custom'].includes(source.evaluationType)
-    ? source.evaluationType
-    : DEFAULT_SHEET_SETTINGS.evaluationType;
-  const customLabel = typeof source.customLabel === 'string' ? source.customLabel.trim().slice(0, 18) : '';
-  return { area, grade, evaluationType, customLabel };
+  const grade = typeof source.grade === 'string' ? source.grade.trim().slice(0, 24) : DEFAULT_SHEET_SETTINGS.grade;
+  const legacyName = source.evaluationType === 'custom' ? source.customLabel : source.evaluationType;
+  const name = (typeof source.name === 'string' ? source.name : (legacyName || DEFAULT_SHEET_SETTINGS.name)).trim().slice(0, 36);
+  return { area, grade, name };
 }
 function loadStore() {
   try {
@@ -112,6 +109,7 @@ function loadStore() {
       answerKeys,
       answerKey: answerKeys[questionCount].slice(),
       sheetSettings: normalizeSheetSettings(parsed.sheetSettings),
+      sheetPresets: Array.isArray(parsed.sheetPresets) ? parsed.sheetPresets : [],
       results: Array.isArray(parsed.results) ? parsed.results : []
     };
   } catch {
@@ -121,6 +119,7 @@ function loadStore() {
       answerKeys: { 20: Array(20).fill(''), 30: Array(30).fill('') },
       answerKey: Array(30).fill(''),
       sheetSettings: { ...DEFAULT_SHEET_SETTINGS },
+      sheetPresets: [],
       results: []
     };
   }
@@ -209,14 +208,8 @@ function updateQuizTypePresentation() {
   if (ui.scanCardCount) ui.scanCardCount.textContent = String(QUESTION_COUNT);
   if (ui.liveViewfinder) ui.liveViewfinder.style.aspectRatio = TEMPLATE.width + ' / ' + TEMPLATE.height;
   if (ui.processBtn) ui.processBtn.innerHTML = 'Leer las ' + QUESTION_COUNT + ' respuestas <span>→</span>';
-  if (ui.templateLink) {
-    const file = QUESTION_COUNT === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
-    const version = QUESTION_COUNT === 20 ? 'R20' : 'R30';
-    ui.templateLink.href = 'assets/' + file;
-    ui.templateLink.download = 'Tarjeta_Respuestas_QUIZ-' + version + '-MOBILE-V1.svg';
-  }
   if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
-  if (ui.sheetDownloadMeta) ui.sheetDownloadMeta.textContent = 'QUIZ · ' + QUESTION_COUNT + ' preguntas · SVG listo para imprimir';
+  if (ui.sheetDownloadMeta) ui.sheetDownloadMeta.textContent = 'QUIZ · ' + QUESTION_COUNT + ' preguntas · PNG, JPG y SVG';
   updateSheetEditorPreview();
 }
 function changeQuizType(nextCount) {
@@ -243,114 +236,150 @@ function changeQuizType(nextCount) {
 ui.quizType20.addEventListener('change', () => { if (ui.quizType20.checked) changeQuizType(20); });
 ui.quizType30.addEventListener('change', () => { if (ui.quizType30.checked) changeQuizType(30); });
 
-function getSheetEvaluationLabel(settings = store.sheetSettings) {
-  if (settings.evaluationType === 'custom') return settings.customLabel.trim();
-  return settings.evaluationType;
-}
+function getSheetEvaluationLabel(settings = store.sheetSettings) { return settings.name.trim(); }
 function readSheetSettingsFromEditor() {
-  return normalizeSheetSettings({
-    area: ui.sheetArea.value,
-    grade: ui.sheetGrade.value,
-    evaluationType: ui.sheetEvaluationType.value,
-    customLabel: ui.sheetCustomLabel.value
-  });
+  return normalizeSheetSettings({ area: ui.sheetArea.value, grade: ui.sheetGrade.value, name: ui.sheetName.value });
 }
-function updateSheetEditorPreview() {
-  if (!ui.sheetArea || !ui.sheetGrade || !ui.sheetEvaluationType) return;
+let sheetPreviewObjectUrl = null;
+async function buildCustomizedSheetSvg(settings = readSheetSettingsFromEditor(), count = QUESTION_COUNT) {
+  const file = count === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
+  const response = await fetch('assets/' + file, { cache: 'no-store' });
+  if (!response.ok) throw new Error('No se pudo cargar la plantilla base.');
+  const xml = new DOMParser().parseFromString(await response.text(), 'image/svg+xml');
+  if (xml.querySelector('parsererror')) throw new Error('La plantilla SVG no se pudo interpretar.');
+  const svg = xml.documentElement, typeText = xml.querySelector('#sheetTypeLabel');
+  const typePill = xml.querySelector('#sheetTypePill'), subjectText = xml.querySelector('#sheetSubjectLine');
+  const title = xml.querySelector('#title'), description = xml.querySelector('#desc');
+  if (!typeText || !typePill || !subjectText) throw new Error('La plantilla no contiene los campos editables esperados.');
+  const label = getSheetEvaluationLabel(settings);
+  typeText.textContent = label;
+  const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
+  typePill.setAttribute('width', String(pillWidth)); typePill.setAttribute('x', String(271 - pillWidth / 2));
+  typeText.setAttribute('font-size', String(Math.max(18, Math.min(38, Math.floor(600 / Math.max(1, label.length))))));
+  const subject = settings.area + ' · Grado ' + settings.grade;
+  subjectText.textContent = subject;
+  subjectText.setAttribute('font-size', String(Math.max(17, Math.min(31, Math.floor(1300 / Math.max(1, subject.length))))));
+  if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
+  if (description) description.textContent = 'Tarjeta QUIZ de ' + count + ' preguntas · ' + label + ' · ' + subject + '.';
+  return new XMLSerializer().serializeToString(svg);
+}
+async function updateSheetEditorPreview() {
+  if (!ui.sheetArea || !ui.sheetGrade || !ui.sheetName) return;
   const settings = readSheetSettingsFromEditor();
-  const label = getSheetEvaluationLabel(settings) || 'Tipo de evaluación';
-  const subject = (settings.area || 'Área o asignatura') + ' · Grado ' + settings.grade;
-  if (ui.sheetPreviewType) ui.sheetPreviewType.textContent = label;
-  if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = subject;
-  if (ui.sheetCustomLabelField) ui.sheetCustomLabelField.hidden = settings.evaluationType !== 'custom';
+  if (ui.sheetPreviewType) ui.sheetPreviewType.textContent = getSheetEvaluationLabel(settings) || 'Nombre de la evaluación';
+  if (ui.sheetPreviewSubject) ui.sheetPreviewSubject.textContent = (settings.area || 'Área o asignatura') + ' · Grado ' + (settings.grade || '—');
   if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
+  if (ui.sheetPreviewImage) {
+    try {
+      const serialized = await buildCustomizedSheetSvg(settings);
+      const nextUrl = URL.createObjectURL(new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' }));
+      const previousUrl = sheetPreviewObjectUrl; sheetPreviewObjectUrl = nextUrl;
+      ui.sheetPreviewImage.src = nextUrl;
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+    } catch (error) { console.warn('No se pudo actualizar la vista previa de la tarjeta:', error); }
+  }
 }
-function saveSheetEditorSettings() {
-  store.sheetSettings = readSheetSettingsFromEditor();
-  persist();
-  updateSheetEditorPreview();
+function saveSheetEditorSettings() { store.sheetSettings = readSheetSettingsFromEditor(); persist(); updateSheetEditorPreview(); }
+function refreshSheetPresetOptions() {
+  if (!ui.sheetPresetSelect) return;
+  const selected = ui.sheetPresetSelect.value;
+  ui.sheetPresetSelect.innerHTML = '<option value="">Selecciona una configuración guardada</option>';
+  (store.sheetPresets || []).forEach((preset, index) => {
+    const option = document.createElement('option'); option.value = String(index); option.textContent = preset.name;
+    ui.sheetPresetSelect.appendChild(option);
+  });
+  if (selected && Number(selected) < (store.sheetPresets || []).length) ui.sheetPresetSelect.value = selected;
+}
+function initializeSheetPresets() {
+  store.sheetPresets = Array.isArray(store.sheetPresets) ? store.sheetPresets : [];
+  refreshSheetPresetOptions();
+  ui.saveSheetPresetBtn?.addEventListener('click', () => {
+    const name = ui.sheetPresetName.value.trim();
+    if (!name) { showToast('Escribe un nombre para guardar la configuración.'); ui.sheetPresetName.focus(); return; }
+    const snapshot = { name: name.slice(0, 50), questionCount: QUESTION_COUNT, assessmentName: ui.keyAssessment.value.trim() || store.assessmentName,
+      answerKeys: { 20: normalizeKey(QUESTION_COUNT === 20 ? store.answerKey : store.answerKeys[20],20), 30: normalizeKey(QUESTION_COUNT === 30 ? store.answerKey : store.answerKeys[30],30) },
+      sheetSettings: readSheetSettingsFromEditor() };
+    const existing = store.sheetPresets.findIndex(item => item.name.toLowerCase() === snapshot.name.toLowerCase());
+    if (existing >= 0) {
+      if (!confirm('Ya existe una configuración con ese nombre. ¿Deseas reemplazarla?')) return;
+      store.sheetPresets[existing] = snapshot;
+    } else store.sheetPresets.push(snapshot);
+    persist(); refreshSheetPresetOptions(); ui.sheetPresetSelect.value = String(store.sheetPresets.findIndex(item => item.name === snapshot.name));
+    showToast('Configuración guardada en este dispositivo.');
+  });
+  ui.loadSheetPresetBtn?.addEventListener('click', () => {
+    const index = Number(ui.sheetPresetSelect.value), preset = store.sheetPresets[index];
+    if (!preset) { showToast('Selecciona una configuración guardada.'); return; }
+    if (preset.questionCount !== QUESTION_COUNT) changeQuizType(preset.questionCount);
+    store.answerKeys = { 20: normalizeKey(preset.answerKeys?.[20],20), 30: normalizeKey(preset.answerKeys?.[30],30) };
+    store.answerKey = store.answerKeys[QUESTION_COUNT].slice();
+    store.assessmentName = preset.assessmentName || preset.name;
+    ui.keyAssessment.value = store.assessmentName; ui.scanAssessment.value = store.assessmentName;
+    ui.sheetArea.value = preset.sheetSettings?.area || ''; ui.sheetGrade.value = preset.sheetSettings?.grade || '';
+    ui.sheetName.value = preset.sheetSettings?.name || preset.name;
+    store.sheetSettings = readSheetSettingsFromEditor();
+    persist(); renderKeyEditor(); updateQuizTypePresentation(); updateSheetEditorPreview();
+    showToast('Configuración y clave restauradas.');
+  });
+  ui.deleteSheetPresetBtn?.addEventListener('click', () => {
+    const index = Number(ui.sheetPresetSelect.value);
+    if (!store.sheetPresets[index]) { showToast('Selecciona una configuración guardada.'); return; }
+    if (!confirm('¿Eliminar esta configuración guardada?')) return;
+    store.sheetPresets.splice(index,1); persist(); refreshSheetPresetOptions(); showToast('Configuración eliminada.');
+  });
 }
 function initializeSheetEditor() {
   store.sheetSettings = normalizeSheetSettings(store.sheetSettings);
   ui.sheetArea.value = store.sheetSettings.area;
   ui.sheetGrade.value = store.sheetSettings.grade;
-  ui.sheetEvaluationType.value = store.sheetSettings.evaluationType;
-  ui.sheetCustomLabel.value = store.sheetSettings.customLabel;
+  ui.sheetName.value = store.sheetSettings.name;
   updateSheetEditorPreview();
   ui.sheetArea.addEventListener('input', saveSheetEditorSettings);
-  ui.sheetGrade.addEventListener('change', saveSheetEditorSettings);
-  ui.sheetEvaluationType.addEventListener('change', saveSheetEditorSettings);
-  ui.sheetCustomLabel.addEventListener('input', saveSheetEditorSettings);
+  ui.sheetGrade.addEventListener('input', saveSheetEditorSettings);
+  ui.sheetName.addEventListener('input', saveSheetEditorSettings);
+  initializeSheetPresets();
 }
 function slugifySheetPart(value) {
   return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
 }
-async function downloadCustomizedSheet(event) {
-  event.preventDefault();
-  const settings = readSheetSettingsFromEditor();
-  const label = getSheetEvaluationLabel(settings);
-  if (!settings.area) {
-    showToast('Escribe el área o asignatura antes de descargar.');
-    ui.sheetArea.focus();
-    return;
-  }
-  if (!label) {
-    showToast('Escribe el nombre del tipo de evaluación.');
-    ui.sheetCustomLabel.focus();
-    return;
-  }
-  try {
-    const file = QUESTION_COUNT === 20 ? 'plantilla_quiz_20.svg' : 'plantilla_quiz_30.svg';
-    const response = await fetch('assets/' + file, { cache: 'no-store' });
-    if (!response.ok) throw new Error('No se pudo cargar la plantilla base.');
-    const source = await response.text();
-    const xml = new DOMParser().parseFromString(source, 'image/svg+xml');
-    if (xml.querySelector('parsererror')) throw new Error('La plantilla SVG no se pudo interpretar.');
-    const typeText = xml.querySelector('#sheetTypeLabel');
-    const typePill = xml.querySelector('#sheetTypePill');
-    const subjectText = xml.querySelector('#sheetSubjectLine');
-    const title = xml.querySelector('#title');
-    const description = xml.querySelector('#desc');
-    if (!typeText || !typePill || !subjectText) throw new Error('La plantilla no contiene los campos editables esperados.');
-
-    typeText.textContent = label;
-    const pillWidth = Math.min(330, Math.max(240, label.length * 21 + 30));
-    typePill.setAttribute('width', String(pillWidth));
-    typePill.setAttribute('x', String(271 - pillWidth / 2));
-    typeText.setAttribute('font-size', label.length > 15 ? '31' : label.length > 13 ? '34' : '38');
-
-    const subject = settings.area + ' · Grado ' + settings.grade;
-    subjectText.textContent = subject;
-    const subjectFont = subject.length > 40 ? 22 : subject.length > 34 ? 25 : subject.length > 29 ? 28 : 31;
-    subjectText.setAttribute('font-size', String(subjectFont));
-    if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
-    if (description) description.textContent = 'Tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas · ' + label + ' · ' + subject + '.';
-
-    const serialized = new XMLSerializer().serializeToString(xml.documentElement);
-    const blob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = [
-      'QUIZ', QUESTION_COUNT,
-      slugifySheetPart(settings.area),
-      slugifySheetPart(label),
-      slugifySheetPart(settings.grade)
-    ].filter(Boolean).join('-') + '.svg';
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
-    store.sheetSettings = settings;
-    persist();
-    showToast('Hoja personalizada descargada: ' + QUESTION_COUNT + ' preguntas.');
-  } catch (error) {
-    console.error('Quiz sheet download:', error);
-    showToast(error && error.message ? error.message : 'No se pudo preparar la hoja personalizada.');
-  }
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob), anchor = document.createElement('a');
+  anchor.href = url; anchor.download = filename; document.body.appendChild(anchor); anchor.click(); anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 15000);
 }
-ui.templateLink.addEventListener('click', downloadCustomizedSheet);
+async function downloadCustomizedSheet(format) {
+  const settings = readSheetSettingsFromEditor(), label = getSheetEvaluationLabel(settings);
+  if (!settings.area) { showToast('Escribe el área o asignatura antes de descargar.'); ui.sheetArea.focus(); return; }
+  if (!settings.grade) { showToast('Escribe el grado antes de descargar.'); ui.sheetGrade.focus(); return; }
+  if (!label) { showToast('Escribe el nombre de la evaluación.'); ui.sheetName.focus(); return; }
+  try {
+    const serialized = await buildCustomizedSheetSvg(settings);
+    const baseName = ['QUIZ', QUESTION_COUNT, slugifySheetPart(settings.area), slugifySheetPart(label), slugifySheetPart(settings.grade)].filter(Boolean).join('-');
+    if (format === 'svg') triggerDownload(new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' }), baseName + '.svg');
+    else {
+      const svgUrl = URL.createObjectURL(new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' }));
+      try {
+        const image = new Image(); image.decoding = 'async'; image.src = svgUrl;
+        if (image.decode) await image.decode();
+        else await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; });
+        const vb = (new DOMParser().parseFromString(serialized, 'image/svg+xml').documentElement.getAttribute('viewBox') || '').trim().split(/[ ,]+/).map(Number);
+        const width = vb[2] || 1199, height = vb[3] || (QUESTION_COUNT === 20 ? 1312 : 1700);
+        const canvas = document.createElement('canvas'); canvas.width = width * 2; canvas.height = height * 2;
+        const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('No fue posible preparar la imagen.');
+        if (format === 'jpg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, format === 'jpg' ? 'image/jpeg' : 'image/png', format === 'jpg' ? .94 : undefined));
+        if (!blob) throw new Error('El navegador no pudo generar el archivo ' + format.toUpperCase() + '.');
+        triggerDownload(blob, baseName + (format === 'jpg' ? '.jpg' : '.png'));
+      } finally { URL.revokeObjectURL(svgUrl); }
+    }
+    store.sheetSettings = settings; persist(); showToast('Hoja personalizada descargada en ' + format.toUpperCase() + '.');
+  } catch (error) { console.error('Quiz sheet download:', error); showToast(error?.message || 'No se pudo preparar la hoja personalizada.'); }
+}
+ui.downloadPngBtn.addEventListener('click', () => downloadCustomizedSheet('png'));
+ui.downloadJpgBtn.addEventListener('click', () => downloadCustomizedSheet('jpg'));
+ui.downloadSvgBtn.addEventListener('click', () => downloadCustomizedSheet('svg'));
 
 
 ui.saveKeyBtn.addEventListener('click', () => {
@@ -358,7 +387,7 @@ ui.saveKeyBtn.addEventListener('click', () => {
   store.assessmentName = title;
   persist();
   ui.scanAssessment.value = title;
-  if (currentRead) renderResult();
+  if (currentRead) { renderResult(); renderAnswerPhoto(); }
   showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : `Clave guardada parcialmente. Completa las ${QUESTION_COUNT} para calcular la nota.`);
 });
 
@@ -388,6 +417,7 @@ ui.removeImage.addEventListener('click', () => {
   ui.resultPanel.hidden = true;
   currentRead = null;
   currentWarpedPreview = null;
+  if (ui.answerPhotoCanvas) { const ctx = ui.answerPhotoCanvas.getContext('2d'); ctx && ctx.clearRect(0,0,ui.answerPhotoCanvas.width,ui.answerPhotoCanvas.height); }
   clearMessage();
 });
 function handleFileSelect(event) {
@@ -426,6 +456,7 @@ async function processCurrentImage() {
       manuallyChanged: false
     };
     renderResult();
+    renderAnswerPhoto();
     showMessage('Tarjeta reconocida. Revisa las marcas señaladas antes de guardar el resultado.', 'success');
     ui.resultPanel.hidden = false;
     ui.resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -619,72 +650,59 @@ function warpToTemplate(sourceRGBA, sourceW, sourceH, markers) {
 }
 
 function readAnswerBubbles(rgba, width, height) {
-  const gray = new Uint8Array(width * height);
-  for (let i = 0, p = 0; i < gray.length; i++, p += 4) gray[i] = Math.round(.299 * rgba[p] + .587 * rgba[p + 1] + .114 * rgba[p + 2]);
   const results = [];
   for (let q = 0; q < QUESTION_COUNT; q++) {
-    const row = q % ROWS_PER_COLUMN;
-    const xStart = q < ROWS_PER_COLUMN ? 0 : 4;
-    const y = TEMPLATE.bubbleYs[row];
-    const metrics = [];
-    for (let opt = 0; opt < 4; opt++) {
-      const x = TEMPLATE.bubbleXs[xStart + opt];
-      metrics.push(measureBubble(gray, width, height, x, y));
-    }
-    const marked = metrics.map((metric, index) => metric.isMarked ? TEMPLATE.options[index] : null).filter(Boolean);
-    const uncertain = metrics.some(metric => metric.score >= .15 && !metric.isMarked);
+    const row = q % ROWS_PER_COLUMN, xStart = q < ROWS_PER_COLUMN ? 0 : 4, y = TEMPLATE.bubbleYs[row], metrics = [];
+    for (let opt = 0; opt < 4; opt++) metrics.push(measureBubble(rgba, width, height, TEMPLATE.bubbleXs[xStart + opt], y));
+    const marked = metrics.map((m, i) => m.isMarked ? TEMPLATE.options[i] : null).filter(Boolean);
+    const uncertain = metrics.some(m => m.score >= .12 && !m.isMarked);
     let status = 'blank', answer = null;
     if (marked.length === 1) {
-      answer = marked[0];
-      status = metrics[TEMPLATE.options.indexOf(answer)].score < .48 ? 'low' : 'ok';
-    } else if (marked.length > 1) {
-      status = 'multiple';
-    } else if (uncertain) {
-      status = 'uncertain';
+      const candidate = marked[0];
+      if (metrics[TEMPLATE.options.indexOf(candidate)].confidence < .68) status = 'low';
+      else { answer = candidate; status = 'ok'; }
     }
+    else if (marked.length > 1) status = 'multiple';
+    else if (uncertain) status = 'uncertain';
     results.push({ question: q + 1, answer, marked, metrics, status, manuallyChanged: false });
   }
   return results;
 }
-function measureBubble(gray, width, height, centerX, centerY) {
-  const x0 = Math.round(centerX), y0 = Math.round(centerY);
-  let innerSum = 0, innerCount = 0, localValues = [];
-  for (let dy = -10; dy <= 10; dy++) {
-    const y = y0 + dy; if (y < 0 || y >= height) continue;
-    for (let dx = -10; dx <= 10; dx++) {
-      const d2 = dx * dx + dy * dy;
-      const x = x0 + dx; if (x < 0 || x >= width) continue;
-      const value = gray[y * width + x];
-      if (d2 <= 81) { innerSum += value; innerCount++; }
-    }
-  }
+function measureBubble(rgba, width, height, centerX, centerY) {
+  const x0 = Math.round(centerX), y0 = Math.round(centerY), ring = [[], [], []];
   for (let dy = -26; dy <= 26; dy++) {
     const y = y0 + dy; if (y < 0 || y >= height) continue;
     for (let dx = -26; dx <= 26; dx++) {
-      const d2 = dx * dx + dy * dy;
-      if (d2 < 441 || d2 > 625) continue;
+      const d2 = dx * dx + dy * dy; if (d2 < 441 || d2 > 625) continue;
       const x = x0 + dx; if (x < 0 || x >= width) continue;
-      localValues.push(gray[y * width + x]);
+      const p = (y * width + x) * 4;
+      for (let c = 0; c < 3; c++) ring[c].push(rgba[p + c]);
     }
   }
-  localValues.sort((a, b) => a - b);
-  const localMedian = localValues.length ? localValues[Math.floor(localValues.length / 2)] : 245;
-  const innerMean = innerSum / Math.max(1, innerCount);
-  const delta = localMedian - innerMean;
-  let darkCount = 0;
+  const median = values => { values.sort((a,b) => a-b); return values.length ? values[Math.floor(values.length/2)] : 245; };
+  const bg = ring.map(median), bgGray = .299*bg[0] + .587*bg[1] + .114*bg[2];
+  let signalSum = 0, ink = 0, strong = 0, total = 0;
   for (let dy = -10; dy <= 10; dy++) {
     const y = y0 + dy; if (y < 0 || y >= height) continue;
     for (let dx = -10; dx <= 10; dx++) {
-      if (dx * dx + dy * dy > 81) continue;
+      if (dx*dx + dy*dy > 81) continue;
       const x = x0 + dx; if (x < 0 || x >= width) continue;
-      if (gray[y * width + x] < localMedian - 40) darkCount++;
+      const p = (y*width+x)*4, r=rgba[p], g=rgba[p+1], b=rgba[p+2];
+      const gray=.299*r+.587*g+.114*b, luminanceDrop=Math.max(0,bgGray-gray);
+      const colorDistance=Math.sqrt((bg[0]-r)**2+(bg[1]-g)**2+(bg[2]-b)**2);
+      const signal=Math.max(luminanceDrop,colorDistance*.72);
+      signalSum+=signal; total++; if(signal>=18) ink++; if(signal>=58) strong++;
     }
   }
-  const darkFraction = darkCount / Math.max(1, innerCount);
-  const score = .55 * clamp((delta - 18) / 112, 0, 1) + .45 * clamp((darkFraction - .05) / .62, 0, 1);
-  return { score, delta, darkFraction, isMarked: delta >= 36 && darkFraction >= .15 && score >= .24 };
+  const meanSignal=signalSum/Math.max(1,total), inkFraction=ink/Math.max(1,total), strongFraction=strong/Math.max(1,total);
+  const score=.48*clamp((meanSignal-6)/66,0,1)+.52*clamp((inkFraction-.025)/.36,0,1);
+  const confidence=clamp(.45*score+.55*clamp((strongFraction-.02)/.24,0,1),0,1);
+  return { score, meanSignal, inkFraction, strongFraction, confidence, isMarked: meanSignal >= 13 && inkFraction >= .22 && score >= .20 };
 }
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+function isPendingAnswer(item) {
+  return (!item.answer && !item.confirmedBlank) || ['multiple', 'uncertain', 'low'].includes(item.status);
+}
 
 function renderResult() {
   if (!currentRead) return;
@@ -706,9 +724,11 @@ function renderResult() {
     select.addEventListener('change', () => {
       item.answer = select.value || null;
       item.manuallyChanged = true;
+      item.confirmedBlank = false;
       item.status = 'manual';
       currentRead.manuallyChanged = true;
       renderResult();
+      renderAnswerPhoto();
     });
     answerCell.appendChild(select);
     const keyCell = document.createElement('td'); keyCell.textContent = store.answerKey[index] || '—';
@@ -720,11 +740,49 @@ function renderResult() {
   });
   updateScoreDisplay();
 }
+
+function renderAnswerPhoto() {
+  const canvas = ui.answerPhotoCanvas, warped = currentWarpedPreview;
+  if (!canvas || !warped || !currentRead) return;
+  const scale = 1.35;
+  canvas.width = Math.round(warped.width * scale); canvas.height = Math.round(warped.height * scale);
+  const ctx = canvas.getContext('2d');
+  const source = document.createElement('canvas'); source.width = warped.width; source.height = warped.height;
+  const sourceCtx = source.getContext('2d');
+  const pixels = new ImageData(new Uint8ClampedArray(warped.data), warped.width, warped.height);
+  sourceCtx.putImageData(pixels, 0, 0);
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  ctx.save(); ctx.scale(scale, scale);
+  currentRead.answers.forEach((item, index) => {
+    const row = index % ROWS_PER_COLUMN, first = index < ROWS_PER_COLUMN ? 0 : 4;
+    const key = store.answerKey[index] || '';
+    const chosen = item.answer || (item.marked && item.marked.length === 1 ? item.marked[0] : '');
+    const uncertain = isPendingAnswer(item) || item.status === 'multiple';
+    const color = uncertain ? '#e5a323' : chosen && key && chosen === key ? '#13965c' : '#e04755';
+    const drawRing = (letter, stroke, radius = 22) => {
+      if (!letter) return;
+      const option = TEMPLATE.options.indexOf(letter); if (option < 0) return;
+      ctx.beginPath(); ctx.arc(TEMPLATE.bubbleXs[first + option], TEMPLATE.bubbleYs[row], radius, 0, Math.PI * 2);
+      ctx.lineWidth = 5; ctx.strokeStyle = stroke; ctx.stroke();
+    };
+    if (chosen) drawRing(chosen, color);
+    else if (key && item.confirmedBlank) drawRing(key, '#e04755');
+    if (chosen && key && chosen !== key && !uncertain) drawRing(key, '#13965c', 25);
+    if (!chosen && !item.confirmedBlank && key) drawRing(key, '#e5a323', 25);
+  });
+  ctx.restore();
+}
+
 function statusFor(item, index) {
   const key = store.answerKey[index];
   if (!key) return { text: 'Sin clave', className: 'warn' };
   if (item.status === 'multiple') return { text: 'Doble marca', className: 'warn' };
-  if (item.status === 'uncertain' || item.status === 'low') return { text: 'Revisar', className: 'warn' };
+  if (item.status === 'uncertain' || item.status === 'low') {
+    const candidate = item.marked && item.marked.length === 1 ? ' · posible ' + item.marked[0] : '';
+    const agreement = item.frameAgreement ? ' ' + item.frameAgreement : '';
+    return { text: 'Revisar' + candidate + agreement, className: 'warn' };
+  }
+  if (item.confirmedBlank) return { text: 'Sin marca (' + item.frameAgreement + ')', className: 'bad' };
   if (!item.answer) return { text: 'Sin respuesta', className: 'bad' };
   if (item.manuallyChanged) return { text: item.answer === key ? 'Ajustada ✓' : 'Ajustada', className: item.answer === key ? 'ok' : 'bad' };
   return item.answer === key ? { text: 'Correcta', className: 'ok' } : { text: 'Incorrecta', className: 'bad' };
@@ -733,28 +791,32 @@ function updateScoreDisplay() {
   const keyReady = store.answerKey.every(Boolean);
   const answers = currentRead.answers;
   const correct = keyReady ? answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length : 0;
-  const pending = answers.filter((item, index) => !item.answer || item.status === 'multiple' || item.status === 'uncertain' || item.status === 'low').length;
+  const pending = answers.filter(isPendingAnswer).length;
   const grade = correct * POINTS_PER_CORRECT;
+  const captureReview = Boolean(currentRead.requiresReview);
   ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
-  ui.scoreDescriptor.textContent = keyReady ? `${correct} de ${QUESTION_COUNT} respuestas correctas` : 'Configura la clave para obtener la nota';
+  ui.scoreDescriptor.textContent = keyReady ? (pending || captureReview ? `${correct} correctas · nota provisional` : `${correct} de ${QUESTION_COUNT} respuestas correctas`) : 'Configura la clave para obtener la nota';
   ui.correctCount.textContent = `${correct} correctas`;
-  ui.invalidCount.textContent = `${pending} por revisar`;
+  ui.invalidCount.textContent = captureReview ? 'Verificar captura' : `${pending} por revisar`;
   ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
-  const needsReview = pending > 0 || !keyReady;
-  ui.reviewBadge.textContent = !keyReady ? 'Falta la clave' : needsReview ? 'Requiere revisión' : 'Lectura completa';
+  const needsReview = pending > 0 || !keyReady || captureReview;
+  ui.reviewBadge.textContent = !keyReady ? 'Falta la clave' : captureReview ? 'Verificar captura' : needsReview ? 'Requiere revisión' : 'Lectura completa';
   ui.reviewBadge.className = `review-badge${needsReview ? ' warn' : ''}`;
   ui.saveResultBtn.disabled = !keyReady;
-  ui.saveResultBtn.textContent = keyReady ? 'Guardar resultado' : 'Configura la clave primero';
+  ui.saveResultBtn.textContent = keyReady ? (captureReview ? 'Confirmar resultado' : 'Guardar resultado') : 'Configura la clave primero';
 }
-ui.regradeBtn.addEventListener('click', () => { renderResult(); showToast('Nota actualizada.'); });
+ui.regradeBtn.addEventListener('click', () => { renderResult(); renderAnswerPhoto(); showToast('Nota actualizada.'); });
 ui.studentName.addEventListener('input', () => { if (currentRead) ui.resultStudent.textContent = ui.studentName.value.trim() || 'Estudiante sin identificar'; });
 ui.scanAssessment.addEventListener('input', () => { if (currentRead) ui.resultAssessment.textContent = ui.scanAssessment.value.trim() || store.assessmentName; });
 function saveCurrentResult({ askForPending = true, silent = false } = {}) {
   if (!currentRead || !store.answerKey.every(Boolean)) return null;
   const student = ui.studentName.value.trim() || 'Sin identificar';
   const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length;
-  const pending = currentRead.answers.filter(item => !item.answer || ['multiple', 'uncertain', 'low'].includes(item.status)).length;
-  if (pending > 0 && askForPending && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return null;
+  const pending = currentRead.answers.filter(isPendingAnswer).length;
+  const warnings = [];
+  if (currentRead.requiresReview) warnings.push('No se detectaron marcas en ninguna respuesta. Verifica el enfoque y la tarjeta.');
+  if (pending > 0) warnings.push(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa; se contarán como incorrectas.`);
+  if (warnings.length && askForPending && !confirm(warnings.join('\n') + '\n¿Deseas guardar la nota?')) return null;
   const record = {
     id: `${Date.now()}-${Math.random().toString(16).slice(2, 7)}`,
     student,
@@ -768,8 +830,9 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
     answers: currentRead.answers.map(item => item.answer || ''),
     key: [...store.answerKey],
     source: currentRead.sourceName,
-    needsReview: pending > 0,
-    pendingCount: pending
+    needsReview: pending > 0 || Boolean(currentRead.requiresReview),
+    pendingCount: pending,
+    reviewReason: currentRead.requiresReview ? 'No se detectaron marcas en ninguna respuesta; verifica el enfoque y la tarjeta.' : ''
   };
   store.results.unshift(record);
   persist();
@@ -876,6 +939,7 @@ let liveStream = null;
 let liveFrameRequest = 0;
 let liveLastDetection = 0;
 let liveStableFrames = 0;
+let livePreviousMarkerCenters = null;
 let liveMarkersReady = false;
 let liveCaptureTriggered = false;
 let liveBusy = false;
@@ -899,6 +963,7 @@ function stopLiveScanner(hide = true) {
   liveMarkersReady = false;
   liveCaptureTriggered = false;
   liveStableFrames = 0;
+  livePreviousMarkerCenters = null;
   if (ui.liveViewfinder) ui.liveViewfinder.classList.remove('locked');
   if (ui.liveLockBadge) ui.liveLockBadge.textContent = 'Buscando los 4 marcadores';
   if (ui.liveScanBtn) ui.liveScanBtn.disabled = false;
@@ -947,6 +1012,7 @@ async function openLiveScanner() {
     requestAnimationFrame(updateLiveGuideGeometry);
     liveLastDetection = 0;
     liveStableFrames = 0;
+    livePreviousMarkerCenters = null;
     liveMarkersReady = false;
     liveCaptureTriggered = false;
     liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
@@ -1032,19 +1098,23 @@ function liveDetectionLoop(timestamp) {
     const frame = ctx.getImageData(0, 0, livePreviewCanvas.width, livePreviewCanvas.height);
     const liveMarkers = detectMarkers(frame.data, frame.width, frame.height);
     verifySelectedQuizType(liveMarkers);
-    liveStableFrames += 1;
-    if (liveStableFrames >= 3 && !liveCaptureTriggered) {
+    const markerCenters = ['tl', 'tr', 'br', 'bl'].map(key => liveMarkers[key]);
+    const drift = livePreviousMarkerCenters
+      ? Math.max(...markerCenters.map((point, index) => distanceBetween(point, livePreviousMarkerCenters[index])))
+      : Infinity;
+    liveStableFrames = drift <= 8 ? liveStableFrames + 1 : 1;
+    livePreviousMarkerCenters = markerCenters.map(point => ({ x: point.x, y: point.y }));
+    if (liveStableFrames >= 5 && !liveCaptureTriggered) {
       liveMarkersReady = true;
       liveCaptureTriggered = true;
       ui.liveViewfinder.classList.add('locked');
       ui.liveLockBadge.textContent = '4 / 4 MARCADORES RECONOCIDOS';
-      setLiveStatus('¡Tarjeta reconocida! Capturando automáticamente…', 'ready');
-      // Small pause lets the visual lock become visible before taking the still frame.
-      setTimeout(() => captureAndGradeLive(), 260);
+      setLiveStatus('Tarjeta estable. Tomando cinco lecturas para comprobar las respuestas…', 'ready');
+      setTimeout(() => captureAndGradeLive(), 420);
     } else if (!liveCaptureTriggered) {
       ui.liveViewfinder.classList.remove('locked');
       ui.liveLockBadge.textContent = 'Detectando…';
-      setLiveStatus('Reconociendo los cuatro puntos… ' + liveStableFrames + '/3');
+      setLiveStatus('Reconociendo los cuatro puntos… ' + liveStableFrames + '/5');
     }
   } catch (error) {
     liveStableFrames = 0;
@@ -1067,53 +1137,65 @@ function showScoreDialog(record) {
   ui.dialogStudent.textContent = record.student + (record.course ? ' · ' + record.course : '');
   ui.dialogScore.textContent = Number(record.score).toFixed(1);
   ui.dialogCorrect.textContent = record.correct + ' de ' + (record.questionCount || QUESTION_COUNT) + ' respuestas correctas';
-  ui.dialogNote.textContent = record.needsReview
+  ui.dialogNote.textContent = record.reviewReason || (record.needsReview
     ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
-    : 'Resultado guardado automáticamente en el historial.';
+    : 'Resultado guardado automáticamente en el historial.');
   ui.scoreDialog.hidden = false;
   ui.dialogOkBtn.focus();
 }
 
+function mergeFrameReads(frameReads) {
+  if (frameReads.length < 4) throw new Error('No se consiguieron suficientes tomas nítidas. Mantén la tarjeta quieta y vuelve a intentar.');
+  return Array.from({ length: QUESTION_COUNT }, (_, index) => {
+    const samples=frameReads.map(read=>read[index]);
+    const counts=Object.fromEntries(TEMPLATE.options.map(letter=>[letter,samples.filter(item=>item.answer===letter&&item.status==='ok').length]));
+    const winner=TEMPLATE.options.slice().sort((a,b)=>counts[b]-counts[a])[0], winnerCount=counts[winner];
+    const multipleCount=samples.filter(item=>item.status==='multiple').length;
+    const allBlank=samples.filter(item=>item.status==='blank').length, metrics=samples[samples.length-1].metrics;
+    if(winnerCount>=4&&multipleCount===0) return {question:index+1,answer:winner,marked:[winner],metrics,status:'ok',confidence:winnerCount/frameReads.length,frameAgreement:winnerCount+'/'+frameReads.length,manuallyChanged:false};
+    if(allBlank>=4&&multipleCount===0&&samples.every(item=>item.status==='blank')) return {question:index+1,answer:null,marked:[],metrics,status:'blank',confirmedBlank:true,confidence:allBlank/frameReads.length,frameAgreement:allBlank+'/'+frameReads.length,manuallyChanged:false};
+    return {question:index+1,answer:null,marked:samples.flatMap(item=>item.marked||[]).filter((v,i,a)=>a.indexOf(v)===i),metrics,status:multipleCount>=3?'multiple':'uncertain',confidence:Math.max(winnerCount,allBlank,multipleCount)/frameReads.length,frameAgreement:Math.max(winnerCount,allBlank,multipleCount)+'/'+frameReads.length,manuallyChanged:false};
+  });
+}
 async function captureAndGradeLive() {
-  if (!liveMarkersReady || !liveStream || !ui.liveVideo.videoWidth || !liveCaptureTriggered) return;
-  setLiveStatus(`Capturando y leyendo las ${QUESTION_COUNT} respuestas…`);
+  if(!liveMarkersReady||!liveStream||!ui.liveVideo.videoWidth||!liveCaptureTriggered)return;
+  if (liveFrameRequest) cancelAnimationFrame(liveFrameRequest);
+  liveFrameRequest = 0;
+  setLiveStatus('Tomando cinco imágenes y comparando las respuestas…');
   try {
-    const captureCanvas = document.createElement('canvas');
-    captureCanvas.width = TEMPLATE.width;
-    captureCanvas.height = TEMPLATE.height;
-    const captureContext = drawVideoCoverToCanvas(ui.liveVideo, captureCanvas);
-    const sourceImage = captureContext.getImageData(0, 0, captureCanvas.width, captureCanvas.height);
-    // Re-detect on the full-resolution still frame; never rely only on the live preview lock.
-    const markers = detectMarkers(sourceImage.data, sourceImage.width, sourceImage.height);
-    verifySelectedQuizType(markers);
-    const warped = warpToTemplate(sourceImage.data, sourceImage.width, sourceImage.height, markers);
-    const answers = readAnswerBubbles(warped.data, warped.width, warped.height);
-    currentFile = null;
-    currentRead = {
-      answers,
-      sourceName: 'Cámara en vivo',
-      detectedAt: new Date().toISOString(),
-      manuallyChanged: false
-    };
-    ui.imageFileName.textContent = 'Captura realizada desde la cámara guiada';
-    ui.photoPreview.src = captureCanvas.toDataURL('image/jpeg', .9);
-    ui.imageStage.hidden = false;
-    renderResult();
-    const record = saveCurrentResult({ askForPending: false, silent: true });
-    if (!record) throw new Error('No pude guardar el resultado. Intenta capturar la tarjeta nuevamente.');
+    const captureCanvas=document.createElement('canvas'), frameReads=[];
+    let lastCaptureUrl='';
+    for(let i=0;i<LIVE_CAPTURE_FRAME_COUNT;i++){
+      if(!liveStream||!ui.liveVideo.videoWidth)throw new Error('La cámara se desconectó durante la lectura.');
+      const ctx=drawVideoCoverToCanvas(ui.liveVideo,captureCanvas);
+      const image=ctx.getImageData(0,0,captureCanvas.width,captureCanvas.height);
+      const markers=detectMarkers(image.data,image.width,image.height); verifySelectedQuizType(markers);
+      const warped=warpToTemplate(image.data,image.width,image.height,markers);
+      frameReads.push(readAnswerBubbles(warped.data,warped.width,warped.height)); currentWarpedPreview=warped;
+      lastCaptureUrl=captureCanvas.toDataURL('image/jpeg',.94);
+      if(i<LIVE_CAPTURE_FRAME_COUNT-1){setLiveStatus('Comparando toma '+(i+1)+' de '+LIVE_CAPTURE_FRAME_COUNT+'… Mantén la hoja quieta.');await new Promise(resolve=>window.setTimeout(resolve,LIVE_CAPTURE_INTERVAL_MS));}
+    }
+    const answers=mergeFrameReads(frameReads);
+    const allBlank = answers.every(item => item.confirmedBlank);
+    currentFile=null;
+    currentRead={answers,sourceName:'Cámara en vivo · '+frameReads.length+' tomas',detectedAt:new Date().toISOString(),manuallyChanged:false,captureFrames:frameReads.length,requiresReview:allBlank};
+    ui.imageFileName.textContent='Lectura verificada con '+frameReads.length+' tomas';
+    ui.photoPreview.src=lastCaptureUrl; ui.imageStage.hidden=false; renderResult(); renderAnswerPhoto();
+    const pending=answers.filter(isPendingAnswer).length;
     stopLiveScanner(true);
-    ui.resultPanel.hidden = true;
-    showScoreDialog(record);
-  } catch (error) {
-    console.error('Quiz live capture:', error);
-    liveMarkersReady = false;
-    liveCaptureTriggered = false;
-    liveStableFrames = 0;
-    setLiveStatus(error && error.message ? error.message : 'No se pudo leer la tarjeta. Alinea de nuevo los cuatro marcadores.', 'error');
-    if (liveStream && !liveFrameRequest) liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
+    ui.resultPanel.hidden=false;
+    showMessage(allBlank
+      ? 'No se detectó ninguna marca en la tarjeta. Comprueba el enfoque, la iluminación y las respuestas visibles; la fotografía y sus indicadores quedan disponibles para revisar.'
+      : pending>0
+        ? 'Se compararon '+frameReads.length+' tomas. '+pending+' respuesta(s) necesitan revisión; comprueba los indicadores antes de guardar.'
+        : 'Lectura completada. Revisa la fotografía: los aciertos aparecen en verde y los errores en rojo. Puedes corregir cualquier respuesta antes de guardar.','success');
+    ui.resultPanel.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(error){
+    console.error('Quiz live capture:',error); liveMarkersReady=false; liveCaptureTriggered=false; liveStableFrames=0;
+    setLiveStatus(error?.message||'No se pudo leer la tarjeta. Alinea de nuevo los cuatro marcadores.','error');
+    if(liveStream&&!liveFrameRequest)liveFrameRequest=requestAnimationFrame(liveDetectionLoop);
   }
 }
-
 ui.dialogOkBtn.addEventListener('click', async () => {
   ui.scoreDialog.hidden = true;
   currentRead = null;

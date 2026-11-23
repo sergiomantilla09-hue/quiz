@@ -17,7 +17,7 @@ const formats = {
 function readSvg(count) {
   const path = count === 20 ? 'assets/plantilla_quiz_20.svg' : 'assets/plantilla_quiz_30.svg';
   const svg = fs.readFileSync(path, 'utf8');
-  assert.match(svg, new RegExp('QUIZ-R' + count + '-MOBILE-V1'));
+  assert.doesNotMatch(svg, /QUIZ-R(?:20|30)-MOBILE-V1|TIPO\s+[A-E]/);
   assert.doesNotMatch(svg, /Balbino García|Colegio/i);
   return svg;
 }
@@ -94,6 +94,10 @@ assert.match(app, /plantilla_quiz_20\.svg/);
 assert.match(app, /plantilla_quiz_30\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_20\.svg/);
 assert.match(serviceWorker, /plantilla_quiz_30\.svg/);
+assert.match(serviceWorker, /pliego\/index\.html\?v=18/);
+assert.match(index, /Montar examen/);
+assert.match(app, /getUserMedia/);
+assert.match(app, /scanIdentity\(warped\)/);
 
 for (const id of ['sheetArea', 'sheetGrade', 'sheetEvaluationType', 'sheetCustomLabel', 'sheetPreviewSubject', 'templateLink']) {
   assert.ok(index.includes('id="' + id + '"'), 'Falta control del editor: ' + id);

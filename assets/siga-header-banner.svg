@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 190" preserveAspectRatio="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="navy" x2="0" y2="1">
+      <stop stop-color="#143f79"/>
+      <stop offset="1" stop-color="#092d63"/>
+    </linearGradient>
+    <linearGradient id="cyan" x2="1" y2="0">
+      <stop stop-color="#087fc0"/>
+      <stop offset=".6" stop-color="#0ca5db"/>
+      <stop offset="1" stop-color="#4dceef"/>
+    </linearGradient>
+    <linearGradient id="gold" x2="1" y2="0">
+      <stop stop-color="#ffc824"/>
+      <stop offset="1" stop-color="#ffe06b"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1600" height="190" rx="17"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1600" height="190" fill="url(#navy)"/>
+    <path d="M0 0H246C169 38 70 81 0 139Z" fill="url(#cyan)"/>
+    <path d="M0 141C130 61 218 26 325 0H278C173 44 80 95 0 167Z" fill="#075e9e" opacity=".75"/>
+    <path d="M0 165C306 174 662 182 989 170C1260 160 1445 137 1600 55V126C1466 169 1256 184 1000 187H0Z" fill="#0867ae"/>
+    <path d="M0 177C326 184 744 185 1082 169C1325 157 1495 126 1600 86V108C1462 151 1287 180 1077 184C701 191 326 188 0 183Z" fill="url(#cyan)"/>
+    <path d="M1290 178C1410 161 1516 129 1600 103" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M0 180C560 186 1140 186 1600 180V190H0Z" fill="url(#gold)"/>
+  </g>
+</svg>

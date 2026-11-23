@@ -20,6 +20,9 @@ Aplicación web progresiva (PWA) de **QUIZ** para leer tarjetas de 20 o 30 pregu
 - Calcula la nota sobre 50: en QUIZ 20 cada acierto vale 2,5; en QUIZ 30 aplica 50/30 puntos por acierto.
 - Guarda los resultados en el dispositivo y permite exportarlos a CSV.
 - Incluye caché para uso sin conexión después de la primera carga.
+- **Montar examen** abre PLIEGO con encabezado, material base, revisión y generación en cuatro apartados superiores.
+- PLIEGO compone cinco versiones con preguntas abiertas al final, permite editar la clave original y descargar el examen y las cinco tablas QUIZ en PDF.
+- **Preparar claves en QUIZ** traslada las claves A–E y selecciona automáticamente el formato de 20 o 30 preguntas para calificar con cámara o fotografía.
 
 ## Publicación
 
@@ -32,7 +35,7 @@ Si GitHub Pages aún no está habilitado, abre **Settings → Pages** en este re
 ## Uso
 
 1. Abre Quiz desde el celular.
-2. En **Clave**, selecciona si la evaluación tiene 20 o 30 preguntas y registra la clave correspondiente.
+2. Para un examen nuevo, pulsa **Montar examen**, analiza el banco, genera las versiones y registra la clave original. Pulsa **Preparar claves en QUIZ** para volver al lector con las cinco claves. También puedes configurar una clave manualmente en **Clave**.
 3. En el editor **Personalizar tarjeta**, escribe el área, elige el grado y el tipo de evaluación. La vista previa se actualiza al cambiar los datos; pulsa **Descargar hoja personalizada** para generar la tarjeta lista para imprimir.
 4. En **Calificar**, puedes dejar nombre y curso en blanco; ambos son opcionales.
 5. En el escaneo guiado, alinea los cuatro marcadores. Quiz toma la fotografía automáticamente cuando los reconoce.

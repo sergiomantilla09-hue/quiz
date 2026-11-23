@@ -12,6 +12,15 @@
   <link rel="icon" href="assets/quiz-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="embed.css?v=18">
+  <link rel="stylesheet" href="siga-ui.css?v=18">
+  <script src="vendor/qrcode-2.0.4.js" defer></script>
+  <script src="vendor/jsQR-1.4.0.js" defer></script>
+  <script src="variants.js?v=18" defer></script>
+  <script src="theme.js?v=18" defer></script>
+  <script src="jspdf.umd.min.js" defer></script>
+  <script src="html2canvas.min.js" defer></script>
+  <script src="pdf-download.js?v=18" defer></script>
   <title>Quiz · Evaluación</title>
 </head>
 <body>
@@ -25,6 +34,7 @@
         </div>
       </div>
       <button id="installBtn" class="install-btn" hidden>Instalar app</button>
+      <a class="pliego-launch" href="pliego/index.html?v=18">Montar examen</a>
     </header>
 
     <main>
@@ -171,6 +181,13 @@
           </div>
           <p class="quiz-type-warning">La tarjeta que escanees debe coincidir con el formato seleccionado. Quiz avisará si presentas una hoja de otro tipo.</p>
         </div>
+        <section id="quizVariants" class="quiz-variants" hidden aria-label="Tipos de prueba de 20 y 30 preguntas">
+          <div class="quiz-variant-toolbar"><select id="quizVariantSet" aria-label="Evaluación y claves"></select><button id="quizNewVariantSet" class="btn btn-secondary" type="button">Nueva prueba A–E</button></div>
+          <div id="quizVariantTabs" class="quiz-variant-tabs" role="group" aria-label="Clave del tipo de prueba" hidden></div>
+          <span id="quizVariantState" class="quiz-variant-state" role="status"></span>
+          <div class="quiz-variant-toolbar"><button id="quizExportVariantKeys" class="btn btn-secondary" type="button">Exportar claves</button><button id="quizImportVariantKeys" class="btn btn-secondary" type="button">Importar claves</button><input id="quizVariantKeysFile" type="file" accept="application/json,.json" hidden></div>
+          <button id="quizDownloadFive" class="btn btn-primary" type="button" hidden>Descargar cinco tarjetas A–E</button>
+        </section>
         <div class="sheet-editor-card">
           <div class="sheet-editor-heading">
             <div><span class="section-kicker">DISEÑO DE LA HOJA</span><h3>Personalizar tarjeta</h3></div>
@@ -264,6 +281,6 @@
     </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js"></script>
+  <script src="app.js?v=18" defer></script>
 </body>
 </html>

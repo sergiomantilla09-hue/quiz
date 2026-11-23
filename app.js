@@ -110,6 +110,9 @@ function loadStore() {
       assessmentName: typeof parsed.assessmentName === 'string' ? parsed.assessmentName : DEFAULT_ASSESSMENT,
       questionCount,
       answerKeys,
+      variantSets: Object.fromEntries(Object.entries(parsed.variantSets || {}).map(([id,value])=>[id,window.SIGA_QUIZ_VARIANTS.normalizeBundle({...value,id})]).filter(([,value])=>value)),
+      activeVariantSet: typeof parsed.activeVariantSet === 'string' ? parsed.activeVariantSet : '',
+      selectedVariant: window.SIGA_QUIZ_VARIANTS.types.includes(parsed.selectedVariant) ? parsed.selectedVariant : 'A',
       answerKey: answerKeys[questionCount].slice(),
       sheetSettings: normalizeSheetSettings(parsed.sheetSettings),
       results: Array.isArray(parsed.results) ? parsed.results : []
@@ -119,6 +122,7 @@ function loadStore() {
       assessmentName: DEFAULT_ASSESSMENT,
       questionCount: 30,
       answerKeys: { 20: Array(20).fill(''), 30: Array(30).fill('') },
+      variantSets: {}, activeVariantSet:'', selectedVariant:'A',
       answerKey: Array(30).fill(''),
       sheetSettings: { ...DEFAULT_SHEET_SETTINGS },
       results: []
@@ -128,7 +132,7 @@ function loadStore() {
 function persist() {
   try {
     store.answerKeys = store.answerKeys || {};
-    store.answerKeys[QUESTION_COUNT] = store.answerKey.slice();
+    rememberCurrentKey();
     store.questionCount = QUESTION_COUNT;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
@@ -180,9 +184,14 @@ function renderKeyEditor() {
       input.value = letter;
       input.checked = answer === letter;
       input.setAttribute('aria-label', `Pregunta ${index + 1}, opción ${letter}`);
+      input.addEventListener('click', () => {
+        const clear=store.answerKey[index]===letter;
+        store.answerKey[index]=clear?'':letter;input.checked=!clear;syncAlternateKeys(index);updateKeyProgress();
+      });
       input.addEventListener('change', () => {
+        if(!input.checked)return;
         store.answerKey[index] = letter;
-        updateKeyProgress();
+        syncAlternateKeys(index);updateKeyProgress();
       });
       const text = document.createElement('span');
       text.textContent = letter;
@@ -198,7 +207,119 @@ function updateKeyProgress() {
   const completed = store.answerKey.filter(Boolean).length;
   ui.keyProgress.textContent = `${completed} de ${QUESTION_COUNT} definidas`;
   ui.keyProgress.style.color = completed === QUESTION_COUNT ? 'var(--green)' : 'var(--muted)';
+  if (store.activeVariantSet) $('quizVariantState').textContent = `Tipo ${store.selectedVariant} · ${completed} de ${QUESTION_COUNT} respuestas definidas`;
 }
+function variantKeys(set, count = QUESTION_COUNT) { return count === 20 ? set?.keys : set?.keys30; }
+function syncAlternateKeys(index){
+  if(store.selectedVariant!=='A')return;
+  const bundle=store.variantSets[store.activeVariantSet];
+  if(bundle)window.SIGA_QUIZ_VARIANTS.propagateFromA(bundle,QUESTION_COUNT,index,store.answerKey[index]);
+}
+function rememberCurrentKey() {
+  if(store.variantSets[store.activeVariantSet]) variantKeys(store.variantSets[store.activeVariantSet])[store.selectedVariant]=normalizeKey(store.answerKey,QUESTION_COUNT);
+  else store.answerKeys[QUESTION_COUNT]=normalizeKey(store.answerKey,QUESTION_COUNT);
+}
+function currentFormatKey() {
+  const keys=variantKeys(store.variantSets[store.activeVariantSet]);
+  return keys ? keys[store.selectedVariant].slice() : normalizeKey(store.answerKeys[QUESTION_COUNT],QUESTION_COUNT);
+}
+function renderVariantControls() {
+  $('quizVariants').hidden=false;
+  const select=$('quizVariantSet'); select.replaceChildren(new Option('Clave única · tarjetas anteriores',''));
+  for(const set of Object.values(store.variantSets))select.add(new Option(set.name+' · '+set.id,set.id));
+  if(!store.variantSets[store.activeVariantSet])store.activeVariantSet='';
+  select.value=store.activeVariantSet;
+  const tabs=$('quizVariantTabs');tabs.replaceChildren();tabs.hidden=!store.activeVariantSet;
+  $('quizDownloadFive').hidden=!store.activeVariantSet;
+  ui.templateLink.hidden=Boolean(store.activeVariantSet);
+  $('quizExportVariantKeys').disabled=!store.activeVariantSet;
+  for(const type of window.SIGA_QUIZ_VARIANTS.types){
+    const b=document.createElement('button');b.type='button';b.textContent=type;b.setAttribute('aria-label','Clave tipo '+type);b.setAttribute('aria-pressed',String(type===store.selectedVariant));
+    b.addEventListener('click',()=>chooseVariant(store.activeVariantSet,type));tabs.append(b);
+  }
+  $('quizVariantState').textContent=store.activeVariantSet?'Evaluación '+store.activeVariantSet+' · Tipo '+store.selectedVariant+' · '+QUESTION_COUNT+' preguntas':'Clave única · '+QUESTION_COUNT+' preguntas';
+}
+function chooseVariant(id,type='A') {
+  if(currentRead && !confirm('Cambiar de clave cerrará la lectura actual sin guardarla. ¿Continuar?')){renderVariantControls();return;}
+  if(liveStream)stopLiveScanner(true);
+  rememberCurrentKey(); if(currentRead)resetScan();
+  store.activeVariantSet=store.variantSets[id]?id:'';store.selectedVariant=type;
+  if(store.activeVariantSet){store.assessmentName=store.variantSets[store.activeVariantSet].name;ui.scanAssessment.value=store.assessmentName;}
+  store.answerKey=currentFormatKey();renderVariantControls();renderKeyEditor();persist();
+}
+$('quizVariantSet').addEventListener('change',e=>chooseVariant(e.target.value));
+$('quizNewVariantSet').addEventListener('click',()=>{
+  rememberCurrentKey();let id;do{id=window.SIGA_QUIZ_VARIANTS.newId();}while(store.variantSets[id]);
+  store.variantSets[id]=window.SIGA_QUIZ_VARIANTS.normalizeBundle({id,name:ui.keyAssessment.value.trim()||store.assessmentName,keys:{}});
+  chooseVariant(id);
+});
+$('quizExportVariantKeys').addEventListener('click',()=>{
+  if(!store.activeVariantSet)return;rememberCurrentKey();
+  const bundle=store.variantSets[store.activeVariantSet],blob=new Blob([JSON.stringify({format:'siga-quiz-variants',version:1,bundle},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='QUIZ-claves-A-E-'+bundle.id+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
+});
+$('quizImportVariantKeys').addEventListener('click',()=>$('quizVariantKeysFile').click());
+$('quizVariantKeysFile').addEventListener('change',async event=>{
+  const file=event.target.files[0];if(!file)return;
+  try{if(file.size>100000)throw Error('El archivo de claves es demasiado grande.');const value=JSON.parse(await file.text());if(value.format!=='siga-quiz-variants'||value.version!==1)throw Error('El archivo no es un conjunto de claves de SIGA+.');window.SIGA_QUIZ_IMPORT_VARIANTS(value.bundle);}catch(error){showToast('No se importaron las claves. '+error.message);}finally{event.target.value='';}
+});
+async function downloadFiveCards(){
+  if(!store.activeVariantSet)return;
+  const setId=store.activeVariantSet,setName=store.variantSets[setId].name,settings=readSheetSettingsFromEditor();
+  const button=$('quizDownloadFive');button.disabled=true;
+  try{
+    const response=await fetch('assets/plantilla_quiz_'+QUESTION_COUNT+'.svg');if(!response.ok)throw Error('No se pudo cargar la tarjeta.');
+    const source=await response.text();
+    const pages=window.SIGA_QUIZ_VARIANTS.types.map(type=>{
+      const svg=window.SIGA_QUIZ_VARIANTS.svg(source,setId,type,{questionCount:QUESTION_COUNT,subject:settings.area+' · Grado '+settings.grade,label:getSheetEvaluationLabel(settings)});
+      const page=document.createElement('section');page.className='print-page';page.style.cssText='box-sizing:border-box;width:816px;height:1056px;background:white;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#172235;';
+      const heading=document.createElement('strong');heading.textContent=setName;heading.style.cssText='font:700 16px Arial;margin:0 0 10px;text-align:center;';
+      const image=document.createElement('img');image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);image.style.cssText=`width:680px;height:${QUESTION_COUNT===20?744:900}px;object-fit:contain;`;page.append(heading,image);return page.outerHTML;
+    });
+    await window.SIGA_QUIZ_DOWNLOAD_PDF(pages,'QUIZ-'+QUESTION_COUNT+'-A-B-C-D-E-'+setId+'.pdf');
+  }catch(error){showToast('No se pudo descargar: '+error.message);}finally{button.disabled=false;}
+}
+$('quizDownloadFive').addEventListener('click',downloadFiveCards);
+window.SIGA_QUIZ_IMPORT_VARIANTS = value => {
+  const bundle=window.SIGA_QUIZ_VARIANTS.normalizeBundle(value);
+  if(!bundle)throw Error('Las claves recibidas no son válidas.');
+  if(currentRead){if(!confirm('Preparar otra evaluación cerrará la lectura actual sin guardar. ¿Continuar?'))throw Error('Importación cancelada.');resetScan();}
+  if(bundle.mapping?.questionCount && bundle.mapping.questionCount!==QUESTION_COUNT)changeQuizType(bundle.mapping.questionCount);
+  const prior=store.variantSets[bundle.id];
+  if(prior && !prior.mapping && !bundle.mapping && JSON.stringify(prior)!==JSON.stringify(bundle))throw Error('La evaluación ya existe con otra clave. No se reemplazó.');
+  if(prior && prior.mapping && JSON.stringify(prior.mapping)!==JSON.stringify(bundle.mapping))throw Error('La evaluación ya existe con otro orden de preguntas. No se reemplazó.');
+  rememberCurrentKey();
+  if(prior){
+    bundle.keys=prior.keys;bundle.keys30=prior.keys30;bundle.name=prior.name;
+    if(prior.mapping&&bundle.mapping&&prior.sourceKey&&bundle.sourceKey){
+      const count=bundle.mapping.questionCount,keys=variantKeys(bundle,count);
+      bundle.sourceKey.forEach((answer,index)=>{if(answer===prior.sourceKey[index])return;keys.A[index]=answer;window.SIGA_QUIZ_VARIANTS.propagateFromA(bundle,count,index,answer);});
+    }
+    bundle.sourceKey=bundle.sourceKey||prior.sourceKey;
+  }
+  store.variantSets[bundle.id]=bundle;
+  if(store.activeVariantSet===bundle.id)store.answerKey=variantKeys(bundle,QUESTION_COUNT)[store.selectedVariant].slice();
+  chooseVariant(bundle.id);store.assessmentName=bundle.name;ui.scanAssessment.value=bundle.name;renderKeyEditor();persist();switchTab('key');
+  const ready=Object.values(variantKeys(bundle)).filter(key=>key.every(Boolean)).length;
+  showToast(ready===5?'Cinco tipos A–E listos para calificar.':`Tipos A–E preparados: ${ready} claves completas de cinco.`);
+};
+function scanIdentity(warped) {
+  const identity=window.SIGA_QUIZ_VARIANTS.decode(warped);
+  if(identity.kind==='legacy'){
+    if(store.activeVariantSet)throw Error('Esta tarjeta no tiene identificador A–E. Selecciona Clave única para calificar tarjetas anteriores.');
+    return{key:store.answerKey.slice()};
+  }
+  if(identity.kind!=='identified')throw Error('No se pudo leer el identificador de la prueba. Toma otra imagen; no se aplicó ninguna clave.');
+  if(identity.questionCount!==QUESTION_COUNT)throw Error(`El código identifica una prueba de ${identity.questionCount} preguntas, pero está seleccionado QUIZ ${QUESTION_COUNT}.`);
+  rememberCurrentKey();const set=store.variantSets[identity.id];
+  if(!set)throw Error('La tarjeta pertenece a otra evaluación ('+identity.id+'). Carga sus claves antes de calificar.');
+  const key=variantKeys(set,identity.questionCount)[identity.type];
+  if(!key.every(Boolean))throw Error('Falta completar la clave del tipo '+identity.type+'. No se calculó la nota.');
+  store.activeVariantSet=identity.id;store.selectedVariant=identity.type;store.answerKey=key.slice();
+  renderVariantControls();renderKeyEditor();ui.scanAssessment.value=set.name;
+  return{key:key.slice(),variantType:identity.type,variantSetId:identity.id,questionCount:identity.questionCount};
+}
+const gradingKey=()=>currentRead?.key || store.answerKey;
 
 function updateQuizTypePresentation() {
   if (ui.quizType20) ui.quizType20.checked = QUESTION_COUNT === 20;
@@ -207,6 +328,8 @@ function updateQuizTypePresentation() {
   if (ui.keyLeftLabel) ui.keyLeftLabel.textContent = '01—' + String(ROWS_PER_COLUMN).padStart(2, '0');
   if (ui.keyRightLabel) ui.keyRightLabel.textContent = String(ROWS_PER_COLUMN + 1).padStart(2, '0') + '—' + QUESTION_COUNT;
   if (ui.scanCardCount) ui.scanCardCount.textContent = String(QUESTION_COUNT);
+  const scaleNote=document.querySelector('.scale-note');
+  if(scaleNote)scaleNote.textContent=`${QUESTION_COUNT} respuestas · Nota máxima: 50,0 · ${POINTS_PER_CORRECT.toLocaleString('es-CO',{maximumFractionDigits:3})} puntos por acierto.`;
   if (ui.liveViewfinder) ui.liveViewfinder.style.aspectRatio = TEMPLATE.width + ' / ' + TEMPLATE.height;
   if (ui.processBtn) ui.processBtn.innerHTML = 'Leer las ' + QUESTION_COUNT + ' respuestas <span>→</span>';
   if (ui.templateLink) {
@@ -218,6 +341,7 @@ function updateQuizTypePresentation() {
   if (ui.sheetPreviewCount) ui.sheetPreviewCount.textContent = QUESTION_COUNT + ' PREGUNTAS';
   if (ui.sheetDownloadMeta) ui.sheetDownloadMeta.textContent = 'QUIZ · ' + QUESTION_COUNT + ' preguntas · SVG listo para imprimir';
   updateSheetEditorPreview();
+  renderVariantControls();
 }
 function changeQuizType(nextCount) {
   if (!QUESTION_COUNTS.includes(nextCount) || nextCount === QUESTION_COUNT) return;
@@ -227,12 +351,12 @@ function changeQuizType(nextCount) {
   }
   if (liveStream) stopLiveScanner(true);
   store.answerKeys = store.answerKeys || {};
-  store.answerKeys[QUESTION_COUNT] = normalizeKey(store.answerKey, QUESTION_COUNT);
+  rememberCurrentKey();
   QUESTION_COUNT = nextCount;
   ROWS_PER_COLUMN = nextCount / 2;
   POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
   TEMPLATE = TEMPLATES[QUESTION_COUNT];
-  store.answerKey = normalizeKey(store.answerKeys[nextCount], nextCount);
+  store.answerKey = currentFormatKey();
   store.questionCount = nextCount;
   if (currentRead) resetScan();
   persist();
@@ -288,6 +412,7 @@ function slugifySheetPart(value) {
 }
 async function downloadCustomizedSheet(event) {
   event.preventDefault();
+  if(store.activeVariantSet)return downloadFiveCards();
   const settings = readSheetSettingsFromEditor();
   const label = getSheetEvaluationLabel(settings);
   if (!settings.area) {
@@ -327,7 +452,8 @@ async function downloadCustomizedSheet(event) {
     if (title) title.textContent = 'Hoja de respuestas QUIZ · ' + label + ' · ' + subject;
     if (description) description.textContent = 'Tarjeta QUIZ de ' + QUESTION_COUNT + ' preguntas · ' + label + ' · ' + subject + '.';
 
-    const serialized = new XMLSerializer().serializeToString(xml.documentElement);
+    let serialized = new XMLSerializer().serializeToString(xml.documentElement);
+    if(store.activeVariantSet)serialized=window.SIGA_QUIZ_VARIANTS.svg(serialized,store.activeVariantSet,store.selectedVariant,{questionCount:QUESTION_COUNT,label:label,subject});
     const blob = new Blob([serialized], { type: 'image/svg+xml;charset=utf-8' });
     const objectUrl = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -336,7 +462,7 @@ async function downloadCustomizedSheet(event) {
       'QUIZ', QUESTION_COUNT,
       slugifySheetPart(settings.area),
       slugifySheetPart(label),
-      slugifySheetPart(settings.grade)
+      slugifySheetPart(settings.grade), store.activeVariantSet?'tipo-'+store.selectedVariant:''
     ].filter(Boolean).join('-') + '.svg';
     document.body.appendChild(anchor);
     anchor.click();
@@ -356,7 +482,9 @@ ui.templateLink.addEventListener('click', downloadCustomizedSheet);
 ui.saveKeyBtn.addEventListener('click', () => {
   const title = ui.keyAssessment.value.trim() || DEFAULT_ASSESSMENT;
   store.assessmentName = title;
+  if(store.variantSets[store.activeVariantSet])store.variantSets[store.activeVariantSet].name=title;
   persist();
+  renderVariantControls();updateKeyProgress();
   ui.scanAssessment.value = title;
   if (currentRead) renderResult();
   showToast(store.answerKey.every(Boolean) ? 'Clave guardada. Ya puedes calificar.' : `Clave guardada parcialmente. Completa las ${QUESTION_COUNT} para calcular la nota.`);
@@ -417,9 +545,11 @@ async function processCurrentImage() {
     const markers = detectMarkers(source.data, source.width, source.height);
     verifySelectedQuizType(markers);
     const warped = warpToTemplate(source.data, source.width, source.height, markers);
+    const identity = scanIdentity(warped);
     currentWarpedPreview = warped;
     const answers = readAnswerBubbles(warped.data, warped.width, warped.height);
     currentRead = {
+      ...identity,
       answers,
       sourceName: currentFile.name || 'Fotografía',
       detectedAt: new Date().toISOString(),
@@ -556,7 +686,8 @@ function findSquareComponent(gray, width, height, region, minDim) {
       const x = sumX / tail, y = sumY / tail;
       const dx = x / width - region.expected[0], dy = y / height - region.expected[1];
       const distance = Math.hypot(dx, dy);
-      const score = tail * (1.25 - Math.min(distance * 2.2, .9)) * (1 - Math.abs(1 - ratio));
+      // Dense fiducial borders outrank larger, sparse QR components near a corner.
+      const score = Math.sqrt(tail) * fill * fill * (1.25 - Math.min(distance * 2.2, .9)) * (1 - Math.abs(1 - ratio));
       if (score > bestScore) {
         bestScore = score;
         best = { x, y, pixels: tail, width: bw, height: bh, fill };
@@ -711,7 +842,7 @@ function renderResult() {
       renderResult();
     });
     answerCell.appendChild(select);
-    const keyCell = document.createElement('td'); keyCell.textContent = store.answerKey[index] || '—';
+    const keyCell = document.createElement('td'); keyCell.textContent = gradingKey()[index] || '—';
     const statusCell = document.createElement('td');
     const status = statusFor(item, index);
     statusCell.innerHTML = `<span class="answer-state ${status.className}">${status.text}</span>`;
@@ -721,7 +852,7 @@ function renderResult() {
   updateScoreDisplay();
 }
 function statusFor(item, index) {
-  const key = store.answerKey[index];
+  const key = gradingKey()[index];
   if (!key) return { text: 'Sin clave', className: 'warn' };
   if (item.status === 'multiple') return { text: 'Doble marca', className: 'warn' };
   if (item.status === 'uncertain' || item.status === 'low') return { text: 'Revisar', className: 'warn' };
@@ -730,13 +861,13 @@ function statusFor(item, index) {
   return item.answer === key ? { text: 'Correcta', className: 'ok' } : { text: 'Incorrecta', className: 'bad' };
 }
 function updateScoreDisplay() {
-  const keyReady = store.answerKey.every(Boolean);
+  const keyReady = gradingKey().every(Boolean);
   const answers = currentRead.answers;
-  const correct = keyReady ? answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length : 0;
+  const correct = keyReady ? answers.filter((item, index) => item.answer && item.answer === gradingKey()[index]).length : 0;
   const pending = answers.filter((item, index) => !item.answer || item.status === 'multiple' || item.status === 'uncertain' || item.status === 'low').length;
   const grade = correct * POINTS_PER_CORRECT;
   ui.scoreValue.textContent = keyReady ? grade.toFixed(1) : '—';
-  ui.scoreDescriptor.textContent = keyReady ? `${correct} de ${QUESTION_COUNT} respuestas correctas` : 'Configura la clave para obtener la nota';
+  ui.scoreDescriptor.textContent = keyReady ? `${currentRead.variantType?'Tipo '+currentRead.variantType+' · ':''}${correct} de ${QUESTION_COUNT} respuestas correctas` : 'Configura la clave para obtener la nota';
   ui.correctCount.textContent = `${correct} correctas`;
   ui.invalidCount.textContent = `${pending} por revisar`;
   ui.scoreValue.parentElement.parentElement.style.setProperty('--score-angle', `${keyReady ? (grade / 50) * 360 : 0}deg`);
@@ -746,13 +877,17 @@ function updateScoreDisplay() {
   ui.saveResultBtn.disabled = !keyReady;
   ui.saveResultBtn.textContent = keyReady ? 'Guardar resultado' : 'Configura la clave primero';
 }
-ui.regradeBtn.addEventListener('click', () => { renderResult(); showToast('Nota actualizada.'); });
+ui.regradeBtn.addEventListener('click', () => {
+  if(!currentRead)return;rememberCurrentKey();
+  const key=currentRead.variantSetId?variantKeys(store.variantSets[currentRead.variantSetId],currentRead.questionCount||QUESTION_COUNT)?.[currentRead.variantType]:store.answerKey;
+  if(key)currentRead.key=key.slice();renderResult();showToast('Nota actualizada.');
+});
 ui.studentName.addEventListener('input', () => { if (currentRead) ui.resultStudent.textContent = ui.studentName.value.trim() || 'Estudiante sin identificar'; });
 ui.scanAssessment.addEventListener('input', () => { if (currentRead) ui.resultAssessment.textContent = ui.scanAssessment.value.trim() || store.assessmentName; });
 function saveCurrentResult({ askForPending = true, silent = false } = {}) {
-  if (!currentRead || !store.answerKey.every(Boolean)) return null;
+  if (!currentRead || !gradingKey().every(Boolean)) return null;
   const student = ui.studentName.value.trim() || 'Sin identificar';
-  const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === store.answerKey[index]).length;
+  const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === gradingKey()[index]).length;
   const pending = currentRead.answers.filter(item => !item.answer || ['multiple', 'uncertain', 'low'].includes(item.status)).length;
   if (pending > 0 && askForPending && !confirm(`Hay ${pending} pregunta(s) sin respuesta o con lectura dudosa. Se contarán como incorrectas si guardas ahora. ¿Deseas guardar la nota?`)) return null;
   const record = {
@@ -766,7 +901,8 @@ function saveCurrentResult({ askForPending = true, silent = false } = {}) {
     score: Number((correct * POINTS_PER_CORRECT).toFixed(1)),
     questionCount: QUESTION_COUNT,
     answers: currentRead.answers.map(item => item.answer || ''),
-    key: [...store.answerKey],
+    key: [...gradingKey()],
+    variantType: currentRead.variantType || '', variantSetId: currentRead.variantSetId || '',
     source: currentRead.sourceName,
     needsReview: pending > 0,
     pendingCount: pending
@@ -794,7 +930,7 @@ function renderHistory() {
     const score = document.createElement('div'); score.className = 'history-score'; score.textContent = `${Number(record.score).toFixed(1)}`;
     const info = document.createElement('div'); info.className = 'history-info';
     const title = document.createElement('strong'); title.textContent = record.student;
-    const detail = document.createElement('small'); detail.textContent = `${record.assessment} · ${record.course || 'Sin curso'} · ${formatDate(record.date)}`;
+    const detail = document.createElement('small'); detail.textContent = `${record.assessment}${record.variantType?' · Tipo '+record.variantType:''} · ${record.course || 'Sin curso'} · ${formatDate(record.date)}`;
     info.append(title, detail);
     const exportOne = document.createElement('button'); exportOne.textContent = 'CSV'; exportOne.setAttribute('aria-label', `Exportar ${record.student}`);
     exportOne.addEventListener('click', () => exportCsv([record], `resultado_${safeFilename(record.student)}.csv`));
@@ -811,10 +947,10 @@ ui.exportCsvBtn.addEventListener('click', () => {
   exportCsv(store.results, 'resultados_balbino_scan.csv');
 });
 function exportCsv(records, filename) {
-  const headers = ['Estudiante', 'Curso', 'Identificación', 'Evaluación', 'Fecha', 'Preguntas', 'Correctas', 'Nota sobre 50', ...Array.from({ length: MAX_QUESTION_COUNT }, (_, i) => `P${i + 1}`)];
+  const headers = ['Estudiante', 'Curso', 'Identificación', 'Evaluación', 'Fecha', 'Preguntas', 'Correctas', 'Nota sobre 50', 'Tipo de prueba', 'Identificador de evaluación', ...Array.from({ length: MAX_QUESTION_COUNT }, (_, i) => `P${i + 1}`)];
   const rows = records.map(record => [
     record.student, record.course, record.studentId, record.assessment, formatDate(record.date),
-    record.questionCount || (record.answers || []).length, record.correct, Number(record.score).toFixed(1),
+    record.questionCount || (record.answers || []).length, record.correct, Number(record.score).toFixed(1),record.variantType||'',record.variantSetId||'',
     ...Array.from({ length: MAX_QUESTION_COUNT }, (_, i) => (record.answers || [])[i] || '')
   ]);
   const csv = '\ufeff' + [headers, ...rows].map(row => row.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
@@ -834,7 +970,7 @@ QUESTION_COUNT = store.questionCount;
 ROWS_PER_COLUMN = QUESTION_COUNT / 2;
 POINTS_PER_CORRECT = MAX_SCORE / QUESTION_COUNT;
 TEMPLATE = TEMPLATES[QUESTION_COUNT];
-store.answerKey = normalizeKey(store.answerKeys[QUESTION_COUNT], QUESTION_COUNT);
+store.answerKey = currentFormatKey();
 ui.scanAssessment.value = store.assessmentName;
 initializeSheetEditor();
 updateQuizTypePresentation();
@@ -851,7 +987,7 @@ ui.installBtn.addEventListener('click', async () => {
   await installPrompt.userChoice;
   installPrompt = null; ui.installBtn.hidden = true;
 });
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(error => console.warn('No se pudo registrar el service worker:', error)));
 }
 
@@ -873,6 +1009,7 @@ ui.dialogNote = $('dialogNote');
 ui.dialogOkBtn = $('dialogOkBtn');
 
 let liveStream = null;
+let liveRequest = 0;
 let liveFrameRequest = 0;
 let liveLastDetection = 0;
 let liveStableFrames = 0;
@@ -887,6 +1024,7 @@ function setLiveStatus(message, state = '') {
   ui.liveStatus.className = 'live-status' + (state ? ' ' + state : '');
 }
 function stopLiveScanner(hide = true) {
+  liveRequest++;
   if (liveFrameRequest) cancelAnimationFrame(liveFrameRequest);
   liveFrameRequest = 0;
   liveBusy = false;
@@ -913,18 +1051,19 @@ async function openLiveScanner() {
     showMessage('La cámara en vivo necesita abrir Quiz desde su dirección HTTPS y permitir el acceso a la cámara.', 'error');
     return;
   }
-  if (!store.answerKey.every(Boolean)) {
+  if (!(store.activeVariantSet?Object.values(variantKeys(store.variantSets[store.activeVariantSet])).some(k=>k.every(Boolean)):store.answerKey.every(Boolean))) {
     showMessage('Antes de escanear, configura las ' + QUESTION_COUNT + ' respuestas correctas en la sección Clave.', 'error');
     switchTab('key');
     return;
   }
   stopLiveScanner(false);
+  const request = liveRequest;
   ui.liveScanner.hidden = false;
   ui.liveScanBtn.disabled = true;
   ui.liveViewfinder.style.aspectRatio = TEMPLATE.width + ' / ' + TEMPLATE.height;
   setLiveStatus('Alinea los cuatro cuadrados negros con las guías.');
   try {
-    liveStream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
       video: {
         facingMode: { ideal: 'environment' },
@@ -932,6 +1071,8 @@ async function openLiveScanner() {
         height: { ideal: 1800 }
       }
     });
+    if (request !== liveRequest) { stream.getTracks().forEach(track => track.stop()); return; }
+    liveStream = stream;
     ui.liveVideo.srcObject = liveStream;
     await new Promise((resolve, reject) => {
       if (ui.liveVideo.readyState >= 1) return resolve();
@@ -939,6 +1080,7 @@ async function openLiveScanner() {
       ui.liveVideo.onerror = () => reject(new Error('No se pudo iniciar la vista de cámara.'));
     });
     await ui.liveVideo.play();
+    if (request !== liveRequest) return;
     // Move the live camera to the top of the phone viewport so it becomes the main focus.
     requestAnimationFrame(() => ui.liveScanner.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     livePreviewCanvas = document.createElement('canvas');
@@ -951,6 +1093,7 @@ async function openLiveScanner() {
     liveCaptureTriggered = false;
     liveFrameRequest = requestAnimationFrame(liveDetectionLoop);
   } catch (error) {
+    if (request !== liveRequest) return;
     console.error('Quiz camera:', error);
     stopLiveScanner(true);
     let message = 'No se pudo abrir la cámara. Revisa los permisos del navegador.';
@@ -1066,7 +1209,7 @@ function liveDetectionLoop(timestamp) {
 function showScoreDialog(record) {
   ui.dialogStudent.textContent = record.student + (record.course ? ' · ' + record.course : '');
   ui.dialogScore.textContent = Number(record.score).toFixed(1);
-  ui.dialogCorrect.textContent = record.correct + ' de ' + (record.questionCount || QUESTION_COUNT) + ' respuestas correctas';
+  ui.dialogCorrect.textContent = (record.variantType?'Tipo '+record.variantType+' · ':'')+record.correct + ' de ' + (record.questionCount || QUESTION_COUNT) + ' respuestas correctas';
   ui.dialogNote.textContent = record.needsReview
     ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
     : 'Resultado guardado automáticamente en el historial.';
@@ -1087,9 +1230,11 @@ async function captureAndGradeLive() {
     const markers = detectMarkers(sourceImage.data, sourceImage.width, sourceImage.height);
     verifySelectedQuizType(markers);
     const warped = warpToTemplate(sourceImage.data, sourceImage.width, sourceImage.height, markers);
+    const identity = scanIdentity(warped);
     const answers = readAnswerBubbles(warped.data, warped.width, warped.height);
     currentFile = null;
     currentRead = {
+      ...identity,
       answers,
       sourceName: 'Cámara en vivo',
       detectedAt: new Date().toISOString(),
@@ -1134,3 +1279,13 @@ ui.dialogOkBtn.addEventListener('click', async () => {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && liveStream) stopLiveScanner(true);
 });
+
+try {
+  const pending = sessionStorage.getItem('quiz.pliego.pending-variants');
+  if (pending) {
+    window.SIGA_QUIZ_IMPORT_VARIANTS(JSON.parse(pending));
+    sessionStorage.removeItem('quiz.pliego.pending-variants');
+  }
+} catch (error) {
+  showToast('No se pudieron preparar las claves de PLIEGO. ' + error.message);
+}

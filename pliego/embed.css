@@ -1,0 +1,21 @@
+html[data-siga-pliego-waiting] #appShell { visibility:hidden; }
+.paper-column > * { flex:none; }
+.q-block,
+.q-option-fragment,
+.q-option,
+.q-option b,
+.q-option span {
+  font-family:Arial,sans-serif !important;
+  font-size:var(--qfont) !important;
+  line-height:var(--lineheight) !important;
+}
+@media screen {
+  .app-shell { min-height:0; }
+  .sidebar, .logo-control > div { min-width:0; }
+  .logo-control input { width:100%; min-width:0; }
+  .paper-stack { align-items:flex-start; }
+  .print-page { transform-origin:top left !important; }
+  .modal-backdrop { align-items:start; padding-top:calc(var(--pliego-viewport-top,0px) + max(18px,(var(--pliego-viewport-height,100svh) - 220px) / 2)); }
+  .modal { max-height:calc(var(--pliego-viewport-height,100svh) - 36px); overflow:auto; }
+  .toast { top:calc(var(--pliego-viewport-top,0px) + var(--pliego-viewport-height,100svh) - 80px); bottom:auto; max-width:calc(100% - 28px); }
+}

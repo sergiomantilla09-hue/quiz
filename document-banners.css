@@ -1,0 +1,133 @@
+:where(.roster-banner, .slip-banner, .doc-header, .consecutive-report-header, .communications-print-header, .alert-letter > header) {
+  background-color: #123d73 !important;
+  background-image: url("assets/siga-header-banner.svg") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+:where(
+  .roster-banner .roster-logo,
+  .slip-banner .slip-logo,
+  .doc-header .doc-logo,
+  .consecutive-report-header img,
+  .communications-print-header img,
+  .alert-letter > header img
+) {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.roster-banner {
+  border-bottom-color: transparent !important;
+  color: #fff !important;
+}
+
+.roster-banner::after {
+  background: transparent !important;
+}
+
+.roster-banner .roster-school,
+.roster-banner .roster-period {
+  color: #fff !important;
+}
+
+.roster-banner .roster-info {
+  border-radius: 1.5mm;
+  background: #ffda52 !important;
+  color: #153b78 !important;
+}
+
+.slip-banner {
+  box-shadow: none !important;
+  color: #fff !important;
+}
+
+.slip-banner .slip-school,
+.slip-banner .slip-title,
+.slip-banner .slip-period {
+  color: #fff !important;
+}
+
+.slip-banner .slip-info {
+  border: 0;
+  border-radius: 5px;
+  background: #ffda52;
+  color: #153b78;
+}
+
+.doc-header {
+  border-bottom-color: transparent !important;
+  color: #fff !important;
+}
+
+.doc-header .doc-school,
+.doc-header .doc-school p,
+.doc-header .doc-school h2,
+.doc-header .doc-school span,
+.doc-header .doc-heading h1,
+.doc-header .doc-heading h2 {
+  border-color: #ffffff80;
+  color: #fff !important;
+}
+
+.doc-header .doc-heading p {
+  border: 0;
+  border-radius: 4px;
+  background: #ffda52 !important;
+  color: #153b78 !important;
+}
+
+.consecutive-report-header {
+  border-bottom-color: transparent !important;
+  color: #fff !important;
+}
+
+.consecutive-report-header :is(p, h3, span, strong) {
+  color: #fff !important;
+}
+
+.consecutive-report-header .consecutive-report-logo {
+  border-color: #ffffff80;
+  background: #fff;
+  color: #153b78;
+}
+
+.communications-print-header {
+  border-bottom-color: transparent !important;
+  color: #fff !important;
+}
+
+.communications-print-header :is(p, h3, span, strong) {
+  color: #fff !important;
+}
+
+.alert-letter > header {
+  border-bottom-color: transparent !important;
+  color: #fff !important;
+}
+
+.alert-letter > header :is(strong, span, b) {
+  color: #fff !important;
+}
+
+.exam-banner.roster-banner {
+  background-image: url("assets/siga-header-banner.svg") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  border-bottom-color: transparent !important;
+}
+
+.exam-banner::before,
+.exam-banner::after {
+  display: none !important;
+}
+
+@media print {
+  :where(.roster-banner, .slip-banner, .doc-header, .consecutive-report-header, .communications-print-header, .alert-letter > header) {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

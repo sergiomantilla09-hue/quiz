@@ -1,0 +1,53 @@
+@media screen {
+  :root {
+    --siga-primary:var(--app-blue,#0d6efd); --siga-hover:var(--app-blue-hover,#0b5ed7);
+    --siga-text:var(--app-text,#172235); --siga-muted:var(--app-muted,#657185);
+    --siga-line:var(--app-line,#d7dee6); --siga-surface:var(--app-card,#fff); --siga-page:var(--app-page,#f3f6f8);
+    --navy:var(--siga-text); --navy2:var(--siga-primary); --green:var(--siga-primary); --green2:var(--siga-hover);
+    --ink:var(--siga-text); --muted:var(--siga-muted); --line:var(--siga-line); --paper:var(--siga-surface); --bg:var(--siga-page);
+    --purple2:color-mix(in srgb,var(--siga-primary) 9%,var(--siga-surface)); --pale:var(--purple2);
+    --lime:var(--siga-primary); --lime2:var(--purple2); --radius:8px;
+    --shadow:0 6px 18px rgba(23,34,53,.08);
+    font-family:Arial,Helvetica,sans-serif;
+  }
+  body { font-family:Arial,Helvetica,sans-serif; background:var(--siga-page); }
+  .app-shell { max-width:1440px; padding:16px 20px 28px; }
+  .app-shell :is(h1,h2,h3,p,button,label,strong,small,span) { letter-spacing:0; }
+  .brand h1,.brand-name { font-size:20px; }
+  .brand-mark { border-radius:8px; background:var(--siga-primary); }
+  .topbar { height:auto; min-height:58px; margin-bottom:16px; }
+  .card,.workspace,.panel,.capture-card,.how-card,.sheet-editor-card,.key-column,.live-scanner { border-radius:8px; border:1px solid var(--siga-line); background:var(--siga-surface); box-shadow:var(--shadow); }
+  .card,.panel { padding:18px; }
+  .tabs { background:var(--purple2); border-radius:8px; }
+  .tab { border-radius:6px; }
+  .tab.active { color:var(--siga-primary); background:var(--siga-surface); }
+  .btn,.install-btn,.sheet-download-btn,.version-tab { border-radius:8px; min-height:38px; }
+  .btn-primary,.btn-lime,.version-tab.active { color:#fff; background:var(--siga-primary); }
+  .btn-primary:hover:not(:disabled),.btn-lime:hover:not(:disabled) { background:var(--siga-hover); }
+  .btn-secondary,.btn-ghost { color:var(--siga-primary); background:var(--siga-surface); border:1px solid var(--siga-line); }
+  .field input,.field select,.field textarea { border-radius:8px; color:var(--siga-text); background:var(--siga-surface); min-height:38px; }
+  .section-kicker,.eyebrow,.step-tag,.key-number { color:var(--siga-primary); }
+  .intro { padding:14px 0; }
+  .intro h1 { font-size:22px; line-height:1.2; margin:6px 0; }
+  .intro h1 em::after { display:none; }
+  .score-card { background:var(--siga-primary); border-radius:8px; }
+  .score-card::before,.score-card::after { display:none; }
+  .key-option { min-height:32px; border-radius:6px; }
+  .key-option:has(input:checked) { background:var(--siga-primary); color:#fff; }
+  .quiz-variants { display:grid; gap:10px; margin:12px 0; padding:12px 0; border-block:1px solid var(--siga-line); }
+  .quiz-variant-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .quiz-variant-toolbar select { flex:1; min-width:160px; max-width:100%; padding:8px; border:1px solid var(--siga-line); border-radius:8px; background:var(--siga-surface); color:var(--siga-text); }
+  .quiz-variant-tabs { display:flex; gap:6px; }
+  .quiz-variant-tabs button { min-width:42px; height:38px; border:1px solid var(--siga-line); border-radius:6px; background:var(--siga-surface); color:var(--siga-primary); font-weight:700; }
+  .quiz-variant-tabs button[aria-pressed="true"] { background:var(--siga-primary); color:#fff; }
+  .quiz-variant-state { font-size:12px; color:var(--siga-muted); }
+  .pliego-key-select { display:flex; align-items:center; gap:6px; margin-top:8px; font-size:12px; }
+  .pliego-key-select select { min-height:34px; border:1px solid var(--siga-line); border-radius:6px; padding:4px 8px; }
+  .workspace-actions { align-items:center; }
+  #pliegoTransferStatus { margin:8px 0 0; color:var(--siga-muted); font-size:12px; }
+  [hidden] { display:none !important; }
+  @media(max-width:620px) { .app-shell{padding:12px;} .key-columns{grid-template-columns:1fr;} .key-option{min-height:36px;} }
+}
+/* PWA navigation to the exam composer. */
+.pliego-launch{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 14px;border:1px solid #ffd446;border-radius:6px;background:#ffd446;color:#09275e;font-size:13px;font-weight:800;text-decoration:none;white-space:nowrap}
+.pliego-launch:hover,.pliego-launch:focus-visible{background:#ffe47e;color:#09275e}

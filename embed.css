@@ -1,0 +1,5 @@
+html[data-siga-quiz-waiting] .app-shell { visibility:hidden; }
+.app-shell { min-height:0; }
+.live-viewfinder { max-height:calc(var(--quiz-viewport-height,100svh) * .62); }
+.score-dialog { align-items:start; padding-top:calc(var(--quiz-viewport-top,0px) + max(20px,(var(--quiz-viewport-height,100svh) - 480px) / 2)); }
+.score-dialog-card { max-height:calc(var(--quiz-viewport-height,100svh) - 40px); overflow:auto; }

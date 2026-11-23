@@ -3,14 +3,20 @@
 <desc id="desc">Tarjeta QUIZ de 30 preguntas, personalizable por asignatura, grado y tipo de evaluación.</desc>
 <rect width="1199" height="1700" fill="#ffffff"/>
 <defs>
-  <linearGradient id="lav" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f1edfb"/><stop offset="1" stop-color="#e7e0f8"/></linearGradient>
-  <linearGradient id="lime" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#e4fb54"/><stop offset="1" stop-color="#c9eb35"/></linearGradient>
+  <linearGradient id="lav" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eaf6fc"/><stop offset="1" stop-color="#d6eefa"/></linearGradient>
+  <linearGradient id="lime" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#ffe783"/><stop offset="1" stop-color="#ffd852"/></linearGradient>
   <style>
-    .navy{fill:#111d4a} .muted{fill:#5d6578} .title{font-family:Arial,Helvetica,sans-serif;font-weight:800;fill:#111d4a}
-    .small{font-family:Arial,Helvetica,sans-serif;font-weight:600;fill:#111d4a}
-    .qnum{font-family:Arial,Helvetica,sans-serif;font-size:31px;font-weight:800;fill:#111d4a;text-anchor:middle;dominant-baseline:middle}
-    .colhead{font-family:Arial,Helvetica,sans-serif;font-size:29px;font-weight:800;fill:#111d4a;text-anchor:middle;dominant-baseline:middle}
-    .bubble{fill:#fff;stroke:#111d4a;stroke-width:3.2}
+    .navy{fill:#153b78} .muted{fill:#4d6980} .title{font-family:Arial,Helvetica,sans-serif;font-weight:800;fill:#153b78}
+    .small{font-family:Arial,Helvetica,sans-serif;font-weight:600;fill:#153b78}
+    .qnum{font-family:Arial,Helvetica,sans-serif;font-size:31px;font-weight:800;fill:#153b78;text-anchor:middle;dominant-baseline:middle}
+    .colhead{font-family:Arial,Helvetica,sans-serif;font-size:29px;font-weight:800;fill:#153b78;text-anchor:middle;dominant-baseline:middle}
+    .bubble{fill:#fff;stroke:#153b78;stroke-width:3.2}
+    rect[fill="#f7f4fc"]{fill:#eef7fc}
+    rect[stroke="#aa97d7"],rect[stroke="#b9a9df"]{stroke:#73a9cd}
+    line[stroke="#111d4a"],path[stroke="#111d4a"]{stroke:#153b78}
+    text[fill="#111d4a"]{fill:#153b78}
+    path[stroke="#BCE52E"],path[stroke="#D8F451"]{stroke:#ffd852}
+    circle[fill="#D8F451"]{fill:#ffd852}
   </style>
 </defs>
 
@@ -26,7 +32,7 @@
         <stop stop-color="#263B7B"/><stop offset="1" stop-color="#101B46"/>
       </linearGradient>
       <linearGradient id="quizMarkLime" x1="72" y1="10" x2="98" y2="78" gradientUnits="userSpaceOnUse">
-        <stop stop-color="#E8FB76"/><stop offset="1" stop-color="#BCE52E"/>
+        <stop stop-color="#ffe783"/><stop offset="1" stop-color="#ffd852"/>
       </linearGradient>
     </defs>
     <rect x="3" y="3" width="114" height="114" rx="34" fill="url(#quizMarkNavy)"/>
@@ -276,13 +282,4 @@
 <circle cx="961.8" cy="1336.1" r="18.2" class="bubble"/>
 <circle cx="1050.9" cy="1336.1" r="18.2" class="bubble"/>
 
-<rect x="230" y="1410" width="739" height="68" rx="34" fill="url(#lav)"/>
-<circle cx="291" cy="1444" r="31" fill="url(#lime)"/>
-<path d="M278 1456 L299 1433 L307 1441 L285 1462 L276 1463Z" fill="none" stroke="#111d4a" stroke-width="4" stroke-linejoin="round"/>
-<path d="M297 1435 L304 1442" stroke="#111d4a" stroke-width="4"/>
-<line x1="333" y1="1427" x2="333" y2="1462" stroke="#111d4a" stroke-width="3"/>
-<text x="650" y="1453" class="title" font-size="27" text-anchor="middle">Marca solo una opción por pregunta.</text>
-<line x1="216" y1="1530" x2="405" y2="1530" stroke="#aa97d7" stroke-width="3"/>
-<text x="600" y="1538" class="title" font-size="23" text-anchor="middle" letter-spacing="2">QUIZ-R30-MOBILE-V1</text>
-<line x1="795" y1="1530" x2="984" y2="1530" stroke="#aa97d7" stroke-width="3"/>
 </svg>

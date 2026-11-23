@@ -1,31 +1,11 @@
-# PLIEGO · Generador de exámenes
+# PLIEGO integrado en QUIZ
 
-PWA para preparar versiones aleatorias de evaluaciones tipo selección múltiple y producir documentos imprimibles tamaño carta.
+Abre **Montar examen** desde la PWA QUIZ. Los cuatro apartados superiores permiten editar el encabezado, analizar el material, revisar las preguntas y generar las versiones.
 
-## Funciones
-- Importa un banco pegado desde texto.
-- Conserva lecturas y materiales compartidos junto a las preguntas asociadas.
-- Selecciona aleatoriamente la cantidad configurada (20 o 30) para cada versión; cada versión realiza un sorteo independiente.
-- Mezcla el orden de preguntas y opciones sin reescribir sus enunciados.
-- Encabezado editable, revisión del material y vista previa.
-- Composición en una o dos columnas, sin separación vertical artificial entre preguntas y con texto justificado.
-- Integra el SVG original de QUIZ de 20 o 30 preguntas al terminar las preguntas, en la misma columna.
-- Guarda el borrador localmente; no envía el banco a un servidor.
+Las preguntas abiertas se agregan después de las 20 o 30 de selección múltiple. **Claves de respuesta · Original** permite registrar la clave antes o después de generar. **Preparar claves en QUIZ** transfiere las cinco versiones al lector y activa el formato correcto para la cámara.
 
-## Ejecución y publicación
-La carpeta se publica como `/pliego/` dentro del repositorio `sergiomantilla09-hue/quiz`. La URL de GitHub Pages es:
+El proyecto se guarda en este navegador y puede exportarse o importarse como archivo. Los PDF del examen y de las tablas se descargan por separado. El lector y PLIEGO quedan disponibles sin conexión después de la primera carga de la PWA.
 
-https://sergiomantilla09-hue.github.io/quiz/pliego/
+La PWA se publica en [GitHub Pages](https://sergiomantilla09-hue.github.io/quiz/) desde la rama `main`. Los bancos y resultados permanecen en el dispositivo; no se envían a GitHub.
 
-El manifest y el service worker usan rutas relativas para funcionar dentro de esa subcarpeta.
-
-## Validación
-Desde la raíz de esta carpeta:
-
-```bash
-node tests/validate-pliego.mjs
-node --check sw.js
-```
-
-## SIGA
-La integración aún no está conectada. Consulta [docs/INTEGRACION_SIGA.md](docs/INTEGRACION_SIGA.md). No se incluyen credenciales ni secretos en esta PWA pública.
+Para comprobar esta integración desde la raíz del repositorio: `node tests/validate-quiz.js`, `node pliego/tests/validate-pliego.mjs` y `node tests/verify-pwa.cjs` con Playwright instalado.

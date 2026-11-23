@@ -5,23 +5,23 @@ import { dirname, join } from 'node:path';
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const html = readFileSync(join(root, 'index.html'), 'utf8');
-const sw = readFileSync(join(root, 'sw.js'), 'utf8');
-const manifest = JSON.parse(readFileSync(join(root, 'manifest.webmanifest'), 'utf8'));
+const app = readFileSync(join(root, 'app.js'), 'utf8');
+const serviceWorker = readFileSync(join(root, '..', 'sw.js'), 'utf8');
 
-const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
-  .map(match => match[1])
-  .filter(script => script.trim());
-
-assert.equal(scripts.length, 1, 'PLIEGO debe contener un script principal');
-new Function(scripts[0]);
+new Function(app);
+assert.ok(html.includes('app.js?v=18'));
+assert.ok(html.includes('Volver a QUIZ'));
+assert.ok(html.includes('pliegoStep1') && html.includes('pliegoStep4'));
+assert.ok(html.includes('originalKeysBtn'));
+assert.ok(app.includes('quiz.pliego.pending-variants'));
 
 assert.ok(html.includes('quiz-exact-svg'));
-assert.ok(html.includes('QUIZ-20-lengua-castellana-recuperacion-10.svg'));
-assert.ok(html.includes('QUIZ-30-lengua-castellana-recuperacion-10.svg'));
+assert.ok(app.includes('plantilla_quiz_20.svg'));
+assert.ok(app.includes('plantilla_quiz_30.svg'));
 assert.ok(html.includes('text-align:justify'));
 assert.ok(html.includes('.paper-column{min-width:0;display:flex;flex-direction:column;gap:0;overflow:hidden}'));
 assert.ok(html.includes('max-width:3.69in'));
-assert.ok(html.includes("replace(/[\\t ]*\\n[\\t ]*/g,' ')"));
+assert.ok(app.includes("replace(/[\\t ]*\\n[\\t ]*/g,' ')"));
 
 const cards = [
   ['QUIZ-20-lengua-castellana-recuperacion-10.svg', 1312, 'QUIZ-R20-MOBILE-V1'],
@@ -37,10 +37,8 @@ for (const [filename, height, id] of cards) {
   assert.ok(svg.includes(id));
 }
 
-assert.ok(sw.includes('pliego-generator-v7'));
-assert.ok(sw.includes('QUIZ-20-lengua-castellana-recuperacion-10.svg'));
-assert.ok(sw.includes('QUIZ-30-lengua-castellana-recuperacion-10.svg'));
-assert.equal(manifest.start_url, './');
-assert.equal(manifest.scope, './');
+assert.ok(serviceWorker.includes('pliego/index.html?v=18'));
+assert.ok(serviceWorker.includes('assets/plantilla_quiz_20.svg'));
+assert.ok(serviceWorker.includes('assets/plantilla_quiz_30.svg'));
 
 console.log('PLIEGO validation passed.');

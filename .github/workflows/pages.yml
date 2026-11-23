@@ -26,6 +26,9 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check variants.js
+          node --check pliego/app.js
+          node --check pdf-download.js
           node --check sw.js
           node tests/validate-quiz.js
           node pliego/tests/validate-pliego.mjs

@@ -259,6 +259,7 @@ $('quizExportVariantKeys').addEventListener('click',()=>{
   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='QUIZ-claves-A-E-'+bundle.id+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
 });
 $('quizImportVariantKeys').addEventListener('click',()=>$('quizVariantKeysFile').click());
+$('scanImportKeysBtn').addEventListener('click',()=>$('quizVariantKeysFile').click());
 $('quizVariantKeysFile').addEventListener('change',async event=>{
   const file=event.target.files[0];if(!file)return;
   try{if(file.size>100000)throw Error('El archivo de claves es demasiado grande.');const value=JSON.parse(await file.text());if(value.format!=='siga-quiz-variants'||value.version!==1)throw Error('El archivo no es un conjunto de claves de SIGA+.');window.SIGA_QUIZ_IMPORT_VARIANTS(value.bundle);}catch(error){showToast('No se importaron las claves. '+error.message);}finally{event.target.value='';}
@@ -300,6 +301,7 @@ window.SIGA_QUIZ_IMPORT_VARIANTS = value => {
   store.variantSets[bundle.id]=bundle;
   if(store.activeVariantSet===bundle.id)store.answerKey=variantKeys(bundle,QUESTION_COUNT)[store.selectedVariant].slice();
   chooseVariant(bundle.id);store.assessmentName=bundle.name;ui.scanAssessment.value=bundle.name;renderKeyEditor();persist();switchTab('key');
+  $('scanKeysNotice').hidden=true;
   const ready=Object.values(variantKeys(bundle)).filter(key=>key.every(Boolean)).length;
   showToast(ready===5?'Cinco tipos A–E listos para calificar.':`Tipos A–E preparados: ${ready} claves completas de cinco.`);
 };
@@ -1047,13 +1049,14 @@ ui.closeLiveScannerBtn.addEventListener('click', () => stopLiveScanner(true));
 
 async function openLiveScanner() {
   clearMessage();
+  $('scanKeysNotice').hidden=true;
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     showMessage('La cámara en vivo necesita abrir Quiz desde su dirección HTTPS y permitir el acceso a la cámara.', 'error');
     return;
   }
   if (!(store.activeVariantSet?Object.values(variantKeys(store.variantSets[store.activeVariantSet])).some(k=>k.every(Boolean)):store.answerKey.every(Boolean))) {
-    showMessage('Antes de escanear, configura las ' + QUESTION_COUNT + ' respuestas correctas en la sección Clave.', 'error');
-    switchTab('key');
+    $('scanKeysNotice').hidden=false;
+    $('scanKeysNotice').scrollIntoView({behavior:'smooth',block:'nearest'});
     return;
   }
   stopLiveScanner(false);

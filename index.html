@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/quiz-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=19">
   <link rel="stylesheet" href="embed.css?v=18">
   <link rel="stylesheet" href="siga-ui.css?v=18">
   <script src="vendor/qrcode-2.0.4.js" defer></script>
@@ -53,6 +53,11 @@
           </div>
           <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
           <input id="galleryInput" type="file" accept="image/*" hidden>
+        </div>
+        <div id="scanKeysNotice" class="scan-keys-notice" role="alert" hidden>
+          <strong>Faltan las claves en este celular</strong>
+          <p>Las claves guardadas en el computador no se sincronizan automáticamente. Allí, abre QUIZ &gt; Clave &gt; Exportar claves. Luego carga ese archivo aquí para calificar con la cámara.</p>
+          <button id="scanImportKeysBtn" class="btn btn-primary" type="button">Importar claves</button>
         </div>
         <section id="liveScanner" class="live-scanner" hidden aria-label="Escáner guiado en vivo">
           <div class="live-scanner-head">
@@ -281,6 +286,6 @@
     </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=18" defer></script>
+  <script src="app.js?v=19" defer></script>
 </body>
 </html>

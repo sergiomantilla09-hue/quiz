@@ -97,6 +97,10 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:980p
 
 /* First-screen scanning layout */
 main>.capture-card{margin-top:12px;margin-bottom:0}
+.scan-keys-notice{margin:12px 0 0;padding:14px;border:1px solid #d7a942;border-left:4px solid #d7a942;border-radius:8px;background:#fffaf0;color:#173968;font-size:12px;line-height:1.5}
+.scan-keys-notice[hidden]{display:none}
+.scan-keys-notice strong{display:block;font-size:14px}
+.scan-keys-notice p{margin:5px 0 10px}
 main>.live-scanner{margin-top:12px}
 main>.template-link{margin-top:8px;margin-bottom:4px}
 @media(max-width:620px){

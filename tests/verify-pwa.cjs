@@ -19,7 +19,7 @@ const server = createServer((request, response) => {
   await new Promise(done => server.listen(0, '127.0.0.1', done));
   const browser = await chromium.launch({ channel:'msedge', headless:true, args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream'] });
   try {
-    const origin = 'http://127.0.0.1:' + server.address().port;
+    const origin = process.env.QUIZ_LIVE_ORIGIN || 'http://127.0.0.1:' + server.address().port;
     const context = await browser.newContext({viewport:{width:1280,height:900},permissions:['camera'],acceptDownloads:true});
     const page = await context.newPage(), errors = [], missing = [];
     page.on('pageerror', error => errors.push(error.stack || error.message));

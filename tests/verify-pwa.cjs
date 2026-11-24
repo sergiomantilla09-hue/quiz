@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
-const { createReadStream, existsSync, statSync } = require('node:fs');
+const { createReadStream, existsSync, statSync, readFileSync } = require('node:fs');
 const { resolve, sep, extname } = require('node:path');
 const { chromium } = require(process.env.SIGA_PLAYWRIGHT_PATH || 'playwright');
 const root = resolve(__dirname, '..');
@@ -24,7 +24,7 @@ const server = createServer((request, response) => {
     const page = await context.newPage(), errors = [], missing = [];
     page.on('pageerror', error => errors.push(error.stack || error.message));
     page.on('response', response => {if(response.status()===404)missing.push(response.url());});
-    await page.goto(origin + '/index.html?v=19');
+    await page.goto(origin + '/index.html?v=20');
     await page.locator('#liveScanBtn').click();
     await page.locator('#scanKeysNotice').waitFor({state:'visible'});
     assert.match(await page.locator('#scanKeysNotice').textContent(),/no se sincronizan automáticamente/);
@@ -57,19 +57,6 @@ const server = createServer((request, response) => {
     assert.ok(active.keys.A.every(Boolean));
     assert.equal(active.mapping.questionCount,count);
     for(const type of ['A','B','C','D','E'])assert.equal(active.keys[type].length,count);
-    const transferBundle=await page.evaluate(()=>store.variantSets[store.activeVariantSet]);
-    const phoneContext=await browser.newContext({viewport:{width:390,height:844},permissions:['camera']});
-    const phone=await phoneContext.newPage();
-    await phone.goto(origin+'/index.html?v=19');
-    await phone.locator('#liveScanBtn').click();
-    await phone.locator('#scanKeysNotice').waitFor({state:'visible'});
-    await phone.locator('#quizVariantKeysFile').setInputFiles({name:'QUIZ-claves.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'siga-quiz-variants',version:1,bundle:transferBundle}))});
-    await phone.locator('#scanKeysNotice').waitFor({state:'hidden'});
-    assert.equal(await phone.locator('#quizType'+count).isChecked(),true);
-    await phone.locator('#liveScanBtn').click();
-    await phone.waitForFunction(() => document.getElementById('liveVideo').srcObject?.getVideoTracks()[0]?.readyState === 'live');
-    await phone.locator('#closeLiveScannerBtn').click();
-    await phoneContext.close();
     await page.locator('[data-tab="scan"]').click();
     await page.locator('#liveScanBtn').click();
     await page.waitForFunction(() => document.getElementById('liveVideo').srcObject?.getVideoTracks()[0]?.readyState === 'live');
@@ -97,6 +84,40 @@ const server = createServer((request, response) => {
     await page.locator('#processBtn').click();
     await page.locator('#resultPanel:not([hidden])').waitFor({timeout:30000});
     assert.match(await page.locator('#scoreValue').textContent(),/50/);
+    const manualWrong=[...'ABCD'].find(letter=>letter!==active.keys.A[0]);
+    await page.locator('[aria-label="Respuesta leída de la pregunta 1"]').selectOption(manualWrong);
+    await page.locator('[aria-label="Respuesta leída de la pregunta 2"]').selectOption('');
+    assert.match(await page.locator('#correctionSummary').textContent(),new RegExp(`${count-2} aciertos · 1 errores · 1 sin responder`));
+    assert.equal(await page.locator('#correctedSheetPanel').isVisible(),true);
+    assert.equal(await page.evaluate(()=>{
+      const x=Math.round(TEMPLATE.bubbleXs[0]),y=Math.round(TEMPLATE.bubbleYs[0]),offset=(y*TEMPLATE.width+x)*4;
+      return [...currentCorrectionCanvas.getContext('2d').getImageData(x,y,1,1).data].slice(0,3).every((value,i)=>value===currentWarpedPreview.data[offset+i]);
+    }),true);
+    const correctedPdf=page.waitForEvent('download');
+    await page.locator('#downloadCorrectedPdfBtn').click();
+    const pdfFile=await correctedPdf;
+    assert.match(pdfFile.suggestedFilename(),/QUIZ-hoja-corregida/);
+    assert.equal(readFileSync(await pdfFile.path()).subarray(0,4).toString(),'%PDF');
+    await page.locator('[aria-label="Respuesta leída de la pregunta 1"]').selectOption(active.keys.A[0]);
+    await page.locator('[aria-label="Respuesta leída de la pregunta 2"]').selectOption(active.keys.A[1]);
+    const mixed=await page.evaluate(async base64=>{
+      const image=new Image();image.src='data:image/png;base64,'+base64;await image.decode();
+      const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+      const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+      const keys=gradingKey();
+      for(const index of [0,1]){
+        ctx.beginPath();ctx.arc(TEMPLATE.bubbleXs['ABCD'.indexOf(keys[index])],TEMPLATE.bubbleYs[index],13,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+      }
+      const wrong=[...'ABCD'].find(letter=>letter!==keys[0]);
+      ctx.beginPath();ctx.arc(TEMPLATE.bubbleXs['ABCD'.indexOf(wrong)],TEMPLATE.bubbleYs[0],13,0,Math.PI*2);ctx.fillStyle='#080d20';ctx.fill();
+      return {png:canvas.toDataURL('image/png').split(',')[1],wrong};
+    },png);
+    await page.locator('#galleryInput').setInputFiles({name:'tarjeta-con-error-y-vacio.png',mimeType:'image/png',buffer:Buffer.from(mixed.png,'base64')});
+    await page.locator('#processBtn').click();
+    await page.locator('#resultPanel:not([hidden])').waitFor({timeout:30000});
+    assert.deepEqual(await page.evaluate(()=>currentRead.answers.slice(0,2).map(item=>item.answer)),[mixed.wrong,null]);
+    assert.match(await page.locator('#correctionSummary').textContent(),new RegExp(`${count-2} aciertos · 1 errores · 1 sin responder`));
+    if(process.env.QUIZ_CORRECTION_SCREENSHOT)await page.locator('#correctedSheetPanel').screenshot({path:process.env.QUIZ_CORRECTION_SCREENSHOT});
     await page.evaluate(async base64=>{
       const image=new Image();image.src='data:image/png;base64,'+base64;await image.decode();
       const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
@@ -109,10 +130,26 @@ const server = createServer((request, response) => {
     try{await page.locator('#scoreDialog:not([hidden])').waitFor({timeout:20000});}
     catch(error){console.log('LIVE_DIAG',await page.evaluate(()=>({status:document.getElementById('liveStatus').textContent,lock:document.getElementById('liveLockBadge').textContent,video:[document.getElementById('liveVideo').videoWidth,document.getElementById('liveVideo').videoHeight],hidden:document.getElementById('liveScanner').hidden,message:document.getElementById('scanMessage').textContent})));throw error;}
     assert.match(await page.locator('#dialogScore').textContent(),/50/);
+    assert.equal(await page.locator('#dialogCorrection').isVisible(),true);
+    assert.match(await page.locator('#dialogCorrectionSummary').textContent(),new RegExp(`${count} aciertos`));
     assert.equal(await page.locator('#liveScanner').isHidden(),true);
     await page.evaluate(()=>clearInterval(window.__quizTestCameraTimer));
     assert.deepEqual(errors,[]);
     assert.deepEqual(missing,[]);
+
+    const transferBundle=await page.evaluate(()=>store.variantSets[store.activeVariantSet]);
+    const phoneContext=await browser.newContext({viewport:{width:390,height:844},permissions:['camera']});
+    const phone=await phoneContext.newPage();
+    await phone.goto(origin+'/index.html?v=20');
+    await phone.locator('#liveScanBtn').click();
+    await phone.locator('#scanKeysNotice').waitFor({state:'visible'});
+    await phone.locator('#quizVariantKeysFile').setInputFiles({name:'QUIZ-claves.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'siga-quiz-variants',version:1,bundle:transferBundle}))});
+    await phone.locator('#scanKeysNotice').waitFor({state:'hidden'});
+    assert.equal(await phone.locator('#quizType'+count).isChecked(),true);
+    await phone.locator('#liveScanBtn').click();
+    await phone.waitForFunction(() => document.getElementById('liveVideo').srcObject?.getVideoTracks()[0]?.readyState === 'live');
+    await phone.locator('#closeLiveScannerBtn').click();
+    await phoneContext.close();
 
     await page.goto(origin + '/pliego/index.html?v=18');
     await page.locator('#generatedWorkspace').waitFor({state:'visible'});
@@ -139,7 +176,7 @@ const server = createServer((request, response) => {
     await page.locator('#originalKeysBtn').waitFor({state:'visible'});
     assert.equal(await page.locator('.pliego-step:visible').count(),4);
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
-    await page.goto(origin + '/index.html?v=19');
+    await page.goto(origin + '/index.html?v=20');
     await page.locator('#liveScanBtn').waitFor({state:'visible'});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
     console.log('PASS: PWA '+count+', PLIEGO, cinco claves, cámara, calificación óptica, PDF y acceso sin conexión.');

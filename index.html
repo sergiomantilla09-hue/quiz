@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/quiz-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
   <link rel="stylesheet" href="embed.css?v=18">
   <link rel="stylesheet" href="siga-ui.css?v=18">
   <script src="vendor/qrcode-2.0.4.js" defer></script>
@@ -154,6 +154,11 @@
               <tbody id="answerRows"></tbody>
             </table>
           </div>
+          <div id="correctedSheetPanel" class="corrected-sheet-panel" hidden>
+            <div class="corrected-sheet-heading"><strong>Hoja corregida</strong><span id="correctionSummary"></span></div>
+            <img id="correctedSheetPreview" alt="Copia de la hoja con aciertos, errores y preguntas sin responder">
+            <button id="downloadCorrectedPdfBtn" class="btn btn-secondary" type="button">Descargar hoja corregida en PDF</button>
+          </div>
           <div class="result-actions">
             <button id="saveResultBtn" class="btn btn-primary">Guardar resultado</button>
             <button id="newScanBtn" class="btn btn-secondary">Siguiente estudiante</button>
@@ -282,10 +287,15 @@
       <div class="dialog-score"><strong id="dialogScore">0.0</strong><span>/ 50</span></div>
       <div id="dialogCorrect" class="dialog-correct">0 de 30 respuestas correctas</div>
       <p id="dialogNote" class="dialog-note">Resultado guardado en el historial de este dispositivo.</p>
+      <div id="dialogCorrection" class="dialog-correction" hidden>
+        <img id="dialogCorrectedPreview" alt="Vista de la hoja corregida">
+        <p id="dialogCorrectionSummary"></p>
+        <button id="dialogDownloadCorrectedPdfBtn" class="btn btn-secondary" type="button">Descargar hoja corregida en PDF</button>
+      </div>
       <button id="dialogOkBtn" class="btn btn-primary dialog-ok">OK · Siguiente estudiante</button>
     </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=19" defer></script>
+  <script src="app.js?v=20" defer></script>
 </body>
 </html>

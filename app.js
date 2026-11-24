@@ -76,6 +76,7 @@ let store = loadStore();
 let currentFile = null;
 let currentRead = null;
 let currentWarpedPreview = null;
+let currentCorrectionCanvas = null;
 let installPrompt = null;
 let toastTimer = null;
 
@@ -496,6 +497,8 @@ function resetScan() {
   currentFile = null;
   currentRead = null;
   currentWarpedPreview = null;
+  currentCorrectionCanvas = null;
+  $('correctedSheetPanel').hidden = true;
   ui.cameraInput.value = '';
   ui.galleryInput.value = '';
   ui.photoPreview.removeAttribute('src');
@@ -518,6 +521,8 @@ ui.removeImage.addEventListener('click', () => {
   ui.resultPanel.hidden = true;
   currentRead = null;
   currentWarpedPreview = null;
+  currentCorrectionCanvas = null;
+  $('correctedSheetPanel').hidden = true;
   clearMessage();
 });
 function handleFileSelect(event) {
@@ -529,6 +534,9 @@ function handleFileSelect(event) {
   }
   currentFile = file;
   currentRead = null;
+  currentWarpedPreview = null;
+  currentCorrectionCanvas = null;
+  $('correctedSheetPanel').hidden = true;
   ui.resultPanel.hidden = true;
   ui.imageFileName.textContent = file.name || 'Fotografía seleccionada';
   ui.photoPreview.src = URL.createObjectURL(file);
@@ -852,6 +860,7 @@ function renderResult() {
     ui.answerRows.appendChild(row);
   });
   updateScoreDisplay();
+  renderCorrectedSheet();
 }
 function statusFor(item, index) {
   const key = gradingKey()[index];
@@ -879,6 +888,73 @@ function updateScoreDisplay() {
   ui.saveResultBtn.disabled = !keyReady;
   ui.saveResultBtn.textContent = keyReady ? 'Guardar resultado' : 'Configura la clave primero';
 }
+function correctionSummary() {
+  const key = gradingKey();
+  const correct = currentRead.answers.filter((item, index) => item.answer && item.answer === key[index]).length;
+  const unanswered = currentRead.answers.filter(item => !item.answer).length;
+  return { correct, unanswered, errors: currentRead.answers.length - correct - unanswered,
+    score: (correct * MAX_SCORE / currentRead.answers.length).toFixed(1) };
+}
+function renderCorrectedSheet() {
+  const panel = $('correctedSheetPanel');
+  if (!currentRead || !currentWarpedPreview || !gradingKey().every(Boolean)) {
+    panel.hidden = true;
+    currentCorrectionCanvas = null;
+    return;
+  }
+  const template = TEMPLATES[currentRead.questionCount || QUESTION_COUNT];
+  const canvas = document.createElement('canvas');
+  canvas.width = currentWarpedPreview.width;
+  canvas.height = currentWarpedPreview.height;
+  const ctx = canvas.getContext('2d');
+  ctx.putImageData(new ImageData(currentWarpedPreview.data, canvas.width, canvas.height), 0, 0);
+  currentRead.answers.forEach((item, index) => {
+    const row = index % template.rowsPerColumn;
+    const x = index < template.rowsPerColumn ? 594 : 1122;
+    const y = template.bubbleYs[row];
+    const color = !item.answer ? '#56657b' : item.answer === gradingKey()[index] ? '#16803a' : '#cf2432';
+    ctx.beginPath(); ctx.arc(x, y, 19, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = color; ctx.stroke();
+    ctx.beginPath(); ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (!item.answer) { ctx.moveTo(x - 8, y); ctx.lineTo(x + 8, y); }
+    else if (item.answer === gradingKey()[index]) {
+      ctx.moveTo(x - 9, y); ctx.lineTo(x - 2, y + 7); ctx.lineTo(x + 10, y - 8);
+    } else {
+      ctx.moveTo(x - 7, y - 7); ctx.lineTo(x + 7, y + 7);
+      ctx.moveTo(x + 7, y - 7); ctx.lineTo(x - 7, y + 7);
+    }
+    ctx.stroke();
+  });
+  currentCorrectionCanvas = canvas;
+  const summary = correctionSummary();
+  $('correctedSheetPreview').src = canvas.toDataURL('image/png');
+  $('correctionSummary').textContent = `${summary.correct} aciertos · ${summary.errors} errores · ${summary.unanswered} sin responder · ${summary.score} / 50`;
+  panel.hidden = false;
+}
+function downloadCorrectedPdf() {
+  if (!currentCorrectionCanvas || !currentRead) return;
+  try {
+    const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4', compress: true });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const scale = Math.min((pageWidth - 32) / currentCorrectionCanvas.width, (pageHeight - 86) / currentCorrectionCanvas.height);
+    const width = currentCorrectionCanvas.width * scale, height = currentCorrectionCanvas.height * scale;
+    pdf.addImage(currentCorrectionCanvas.toDataURL('image/png'), 'PNG', (pageWidth - width) / 2, 16, width, height);
+    const summary = correctionSummary();
+    pdf.setDrawColor(81, 161, 204); pdf.line(20, pageHeight - 54, pageWidth - 20, pageHeight - 54);
+    pdf.setTextColor(17, 48, 94); pdf.setFont('helvetica', 'bold'); pdf.setFontSize(11);
+    pdf.text('QUIZ · HOJA CORREGIDA', 22, pageHeight - 38);
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(10);
+    pdf.text(`${summary.correct} aciertos  |  ${summary.errors} errores  |  ${summary.unanswered} sin responder  |  ${summary.score} / 50`, 22, pageHeight - 22);
+    const name = (ui.studentName.value.trim() || 'estudiante').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]+/g, '-').slice(0, 40);
+    const url = URL.createObjectURL(pdf.output('blob'));
+    const link = document.createElement('a'); link.href = url; link.download = `QUIZ-hoja-corregida-${name}.pdf`;
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 15000);
+  } catch (error) { console.error('QUIZ corrected PDF:', error); showToast('No se pudo descargar la hoja corregida.'); }
+}
+$('downloadCorrectedPdfBtn').addEventListener('click', downloadCorrectedPdf);
+$('dialogDownloadCorrectedPdfBtn').addEventListener('click', downloadCorrectedPdf);
 ui.regradeBtn.addEventListener('click', () => {
   if(!currentRead)return;rememberCurrentKey();
   const key=currentRead.variantSetId?variantKeys(store.variantSets[currentRead.variantSetId],currentRead.questionCount||QUESTION_COUNT)?.[currentRead.variantType]:store.answerKey;
@@ -1216,6 +1292,12 @@ function showScoreDialog(record) {
   ui.dialogNote.textContent = record.needsReview
     ? record.pendingCount + ' pregunta(s) vacía(s) o dudosa(s) se contaron como incorrectas. El resultado quedó guardado.'
     : 'Resultado guardado automáticamente en el historial.';
+  const corrected = $('dialogCorrection');
+  corrected.hidden = !currentCorrectionCanvas;
+  if (currentCorrectionCanvas) {
+    $('dialogCorrectedPreview').src = $('correctedSheetPreview').src;
+    $('dialogCorrectionSummary').textContent = $('correctionSummary').textContent;
+  }
   ui.scoreDialog.hidden = false;
   ui.dialogOkBtn.focus();
 }
@@ -1243,6 +1325,7 @@ async function captureAndGradeLive() {
       detectedAt: new Date().toISOString(),
       manuallyChanged: false
     };
+    currentWarpedPreview = warped;
     ui.imageFileName.textContent = 'Captura realizada desde la cámara guiada';
     ui.photoPreview.src = captureCanvas.toDataURL('image/jpeg', .9);
     ui.imageStage.hidden = false;
@@ -1267,6 +1350,8 @@ ui.dialogOkBtn.addEventListener('click', async () => {
   currentRead = null;
   currentFile = null;
   currentWarpedPreview = null;
+  currentCorrectionCanvas = null;
+  $('correctedSheetPanel').hidden = true;
   ui.resultPanel.hidden = true;
   ui.imageStage.hidden = true;
   ui.photoPreview.removeAttribute('src');

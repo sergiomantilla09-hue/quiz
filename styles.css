@@ -86,6 +86,17 @@ button,input,select{font:inherit}button{cursor:pointer}.app-shell{max-width:980p
 .dialog-correct{position:relative;z-index:1;margin:5px auto 0;width:max-content;max-width:100%;padding:7px 13px;border-radius:20px;background:var(--lime2);color:#3c4d10;font-size:11px;font-weight:850}
 .dialog-note{position:relative;z-index:1;min-height:33px;margin:13px 0 17px;color:#747b8d;font-size:10px;line-height:1.45}
 .dialog-ok{position:relative;z-index:1;width:100%;min-height:48px;border-radius:14px;font-size:13px;letter-spacing:.01em;box-shadow:0 7px 18px rgba(17,29,74,.18)}
+.corrected-sheet-panel{margin:16px 0;padding:14px;border:1px solid #9fc8df;border-radius:8px;background:#f4faff;color:#123562}
+.corrected-sheet-panel[hidden],.dialog-correction[hidden]{display:none}
+.corrected-sheet-heading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;margin-bottom:10px;font-size:12px}
+.corrected-sheet-heading span{color:#395d77}
+.corrected-sheet-panel img{display:block;width:100%;max-height:720px;object-fit:contain;background:#fff;border:1px solid #d5e7f0}
+.corrected-sheet-panel button{margin-top:10px;width:100%}
+.score-dialog-card{max-height:calc(100dvh - 32px);overflow-y:auto}
+.dialog-correction{position:relative;z-index:1;margin:0 0 12px;padding:10px;border:1px solid #b9d9e9;border-radius:8px;background:#f4faff}
+.dialog-correction img{display:block;width:100%;height:125px;object-fit:contain;background:#fff}
+.dialog-correction p{margin:8px 0;color:#173968;font-size:10px;font-weight:750}
+.dialog-correction button{width:100%}
 @keyframes quizModalIn{from{opacity:0;transform:translateY(13px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:620px){
   .quiz-logo{width:43px;height:43px;flex-basis:43px}

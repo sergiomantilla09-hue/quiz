@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/quiz-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
   <link rel="stylesheet" href="embed.css?v=18">
   <link rel="stylesheet" href="siga-ui.css?v=18">
   <script src="vendor/qrcode-2.0.4.js" defer></script>
@@ -144,6 +144,11 @@
               <div class="score-meta"><span id="correctCount">0 correctas</span><i></i><span id="invalidCount">0 por revisar</span></div>
             </div>
           </div>
+          <div id="correctedSheetPanel" class="corrected-sheet-panel" hidden>
+            <div class="corrected-sheet-heading"><strong>Hoja corregida</strong><span id="correctionSummary"></span></div>
+            <img id="correctedSheetPreview" alt="Copia de la hoja con aciertos, errores y preguntas sin responder">
+            <button id="downloadCorrectedPdfBtn" class="btn btn-secondary" type="button">Descargar hoja corregida en PDF</button>
+          </div>
           <div class="answer-review-head">
             <div><h3>Respuestas detectadas</h3><p>Corrige aquí cualquier lectura dudosa.</p></div>
             <button id="regradeBtn" class="small-action">Actualizar nota</button>
@@ -153,11 +158,6 @@
               <thead><tr><th>N.º</th><th>Leída</th><th>Clave</th><th>Estado</th></tr></thead>
               <tbody id="answerRows"></tbody>
             </table>
-          </div>
-          <div id="correctedSheetPanel" class="corrected-sheet-panel" hidden>
-            <div class="corrected-sheet-heading"><strong>Hoja corregida</strong><span id="correctionSummary"></span></div>
-            <img id="correctedSheetPreview" alt="Copia de la hoja con aciertos, errores y preguntas sin responder">
-            <button id="downloadCorrectedPdfBtn" class="btn btn-secondary" type="button">Descargar hoja corregida en PDF</button>
           </div>
           <div class="result-actions">
             <button id="saveResultBtn" class="btn btn-primary">Guardar resultado</button>
@@ -282,12 +282,13 @@
     <div class="score-dialog-card">
       <div class="dialog-logo"><img src="assets/quiz-mark.svg" alt=""></div>
       <div class="dialog-kicker">LECTURA COMPLETADA</div>
-      <h2 id="dialogTitle">Resultado del estudiante</h2>
+      <h2 id="dialogTitle" tabindex="-1">Resultado del estudiante</h2>
       <p id="dialogStudent" class="dialog-student"></p>
       <div class="dialog-score"><strong id="dialogScore">0.0</strong><span>/ 50</span></div>
       <div id="dialogCorrect" class="dialog-correct">0 de 30 respuestas correctas</div>
       <p id="dialogNote" class="dialog-note">Resultado guardado en el historial de este dispositivo.</p>
       <div id="dialogCorrection" class="dialog-correction" hidden>
+        <strong>Hoja corregida</strong>
         <img id="dialogCorrectedPreview" alt="Vista de la hoja corregida">
         <p id="dialogCorrectionSummary"></p>
         <button id="dialogDownloadCorrectedPdfBtn" class="btn btn-secondary" type="button">Descargar hoja corregida en PDF</button>
@@ -296,6 +297,6 @@
     </div>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=20" defer></script>
+  <script src="app.js?v=21" defer></script>
 </body>
 </html>

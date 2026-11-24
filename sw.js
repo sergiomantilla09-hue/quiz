@@ -1,7 +1,7 @@
-const CACHE_NAME = 'quiz-pwa-v20';
+const CACHE_NAME = 'quiz-pwa-v21';
 const APP_FILES = [
-  './', './index.html', './index.html?v=20', './manifest.webmanifest',
-  './styles.css?v=20', './embed.css?v=18', './siga-ui.css?v=18', './app.js?v=20',
+  './', './index.html', './index.html?v=21', './manifest.webmanifest',
+  './styles.css?v=21', './embed.css?v=18', './siga-ui.css?v=18', './app.js?v=21',
   './theme.js?v=18', './variants.js?v=18', './pdf-download.js?v=18',
   './vendor/qrcode-2.0.4.js', './vendor/jsQR-1.4.0.js',
   './jspdf.umd.min.js', './html2canvas.min.js', './document-banners.css?v=18',
@@ -30,5 +30,5 @@ self.addEventListener('fetch', event => {
       caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
     }
     return response;
-  }).catch(() => event.request.mode === 'navigate' ? caches.match('./index.html?v=20') : Response.error())));
+  }).catch(() => event.request.mode === 'navigate' ? caches.match('./index.html?v=21') : Response.error())));
 });

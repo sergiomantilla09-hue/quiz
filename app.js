@@ -1295,11 +1295,17 @@ function showScoreDialog(record) {
   const corrected = $('dialogCorrection');
   corrected.hidden = !currentCorrectionCanvas;
   if (currentCorrectionCanvas) {
-    $('dialogCorrectedPreview').src = $('correctedSheetPreview').src;
+    const template = TEMPLATES[currentRead.questionCount || QUESTION_COUNT];
+    const top = 445;
+    const height = template.bubbleYs.at(-1) - top + 36;
+    const preview = document.createElement('canvas');
+    preview.width = 1060; preview.height = Math.ceil(height);
+    preview.getContext('2d').drawImage(currentCorrectionCanvas, 100, top, preview.width, preview.height, 0, 0, preview.width, preview.height);
+    $('dialogCorrectedPreview').src = preview.toDataURL('image/png');
     $('dialogCorrectionSummary').textContent = $('correctionSummary').textContent;
   }
   ui.scoreDialog.hidden = false;
-  ui.dialogOkBtn.focus();
+  $('dialogTitle').focus({ preventScroll: true });
 }
 
 async function captureAndGradeLive() {
